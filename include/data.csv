@@ -1,0 +1,11 @@
+date,product,category,quantity,unit_price,total_sales,customer_id,region
+2024-01-01,Laptop,Electronics,2,999.99,1999.98,C001,North
+2024-01-01,Mouse,Electronics,5,29.99,149.95,C002,South
+2024-01-02,Keyboard,Electronics,3,89.99,269.97,C003,East
+2024-01-02,Monitor,Electronics,1,299.99,299.99,C001,North
+2024-01-03,Headphones,Electronics,4,79.99,319.96,C004,West
+2024-01-03,SSD Drive,Electronics,2,159.99,319.98,C005,South
+2024-01-04,Webcam,Electronics,3,69.99,209.97,C002,South
+2024-01-04,USB Cable,Accessories,10,9.99,99.90,C003,East
+2024-01-05,Power Bank,Accessories,5,49.99,249.95,C004,West
+2024-01-05,Phone Case,Accessories,8,19.99,159.92,C005,South
