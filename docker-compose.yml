@@ -1,0 +1,11 @@
+services:
+  cnpi-pipeline:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    environment:
+      - DATABRICKS_HOST=${DATABRICKS_HOST}
+      - DATABRICKS_TOKEN=${DATABRICKS_TOKEN}
+    volumes:
+      - .:/app  # Mapeamento correto do volume
+    restart: on-failure
