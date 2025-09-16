@@ -103,6 +103,8 @@ services:
   airflow-dag-processor:
     <<: *airflow-common
     command: dag-processor
+    env_file:
+      - .env
     healthcheck:
       test: ["CMD-SHELL", 'airflow jobs check --job-type DagProcessorJob --hostname "$${HOSTNAME}"']
       interval: 30s
@@ -118,6 +120,8 @@ services:
   airflow-apiserver:
     <<: *airflow-common
     command: api-server
+    env_file:
+      - .env
     ports:
       - "8080:8080"
     healthcheck:
@@ -135,6 +139,8 @@ services:
   airflow-scheduler:
     <<: *airflow-common
     command: scheduler
+    env_file:
+      - .env
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:8974/health"]
       interval: 30s
@@ -151,6 +157,8 @@ services:
   airflow-init:
     <<: *airflow-common
     entrypoint: /bin/bash
+    env_file:
+      - .env
     # yamllint disable rule:line-length
     command:
       - -c
