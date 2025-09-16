@@ -13,7 +13,7 @@ default_args = {
 def get_bronze_companies():
     """Executa o script Python usando subprocess com caminho absoluto"""
     # Caminho absoluto direto
-    script_path = '/opt/airflow/scripts/0_bronze/companies.py'
+    script_path = '/opt/airflow/scripts/bronze/companies.py'
     
     # Verifica se o arquivo existe
     if not os.path.exists(script_path):
