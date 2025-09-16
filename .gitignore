@@ -209,3 +209,4 @@ __marimo__/
 /data/postgres
 /bkup/
 .astro/
+/logs/

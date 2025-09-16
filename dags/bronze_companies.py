@@ -10,10 +10,10 @@ default_args = {
     'retry_delay': timedelta(minutes=5),
 }
 
-def executar_script_python():
+def get_bronze_companies():
     """Executa o script Python usando subprocess com caminho absoluto"""
     # Caminho absoluto direto
-    script_path = '/opt/airflow/scripts/read_df.py'
+    script_path = '/opt/airflow/scripts/bronze/companies.py'
     
     # Verifica se o arquivo existe
     if not os.path.exists(script_path):
@@ -40,15 +40,15 @@ def executar_script_python():
     print("Script executado com sucesso!")
 
 with DAG(
-    'executar_script_python',
+    'bronze_companies',
     default_args=default_args,
     start_date=datetime(2024, 1, 1),
     catchup=False,
 ) as dag:
 
     task = PythonOperator(
-        task_id='executar_script_read_df',
-        python_callable=executar_script_python,
+        task_id='bronze_companies',
+        python_callable=get_bronze_companies,
     )
 
     task
