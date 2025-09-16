@@ -77,7 +77,20 @@ def get_source_data(
 
     return df
 
-def save_to_postgres(df, columns_table, db_config, conflict_cols):
+def save_to_postgres(df, columns_table, db_config, conflict_cols=None, mode="update"):
+    """
+    Salva DataFrame no Postgres de forma idempotente.
+
+    Args:
+        df (pd.DataFrame): Dados a serem salvos.
+        columns_table (dict): Colunas e tipos para criação da tabela.
+        db_config (dict): Credenciais do banco + nome da tabela.
+        conflict_cols (list): Colunas que definem unicidade (chave natural).
+        mode (str): "update" para upsert, "ignore" para ignorar duplicados, None para sempre inserir.
+    """
+
+    # 1. Substituir <NA> (pd.NA / NAType) e NaN por None (compatível com psycopg2/Postgres)
+    df = df.astype(object).where(pd.notna(df), None)
 
     conn = psycopg2.connect(
         host=db_config["host"],
@@ -90,22 +103,23 @@ def save_to_postgres(df, columns_table, db_config, conflict_cols):
 
     table = db_config["table"]
 
-    # Criação das colunas
+    # 2. Criar tabela se não existir
     col_defs = [f"{col} {dtype}" for col, dtype in columns_table.items()]
     create_table_sql = f"CREATE TABLE IF NOT EXISTS {table} ({', '.join(col_defs)})"
     cur.execute(create_table_sql)
 
-    # Garantir constraints para ON CONFLICT
+    # 3. Garantir constraints para ON CONFLICT
     if conflict_cols:
         if len(conflict_cols) == 1:
-            # Se for apenas 1 coluna -> PRIMARY KEY
             col = conflict_cols[0]
             cur.execute(f"""
                 DO $$
                 BEGIN
                     IF NOT EXISTS (
-                        SELECT 1 FROM information_schema.table_constraints
-                        WHERE table_name = '{table}' AND constraint_type = 'PRIMARY KEY'
+                        SELECT 1
+                        FROM information_schema.table_constraints
+                        WHERE table_name = '{table}'
+                          AND constraint_type = 'PRIMARY KEY'
                     ) THEN
                         ALTER TABLE {table} ADD PRIMARY KEY ({col});
                     END IF;
@@ -113,15 +127,17 @@ def save_to_postgres(df, columns_table, db_config, conflict_cols):
                 $$;
             """)
         else:
-            # Se for mais de 1 coluna -> UNIQUE constraint
             constraint_name = f"{table}_{'_'.join(conflict_cols)}_uniq"
             cur.execute(f"""
                 DO $$
                 BEGIN
                     IF NOT EXISTS (
-                        SELECT 1 FROM pg_constraint WHERE conname = '{constraint_name}'
+                        SELECT 1
+                        FROM pg_constraint
+                        WHERE conname = '{constraint_name}'
                     ) THEN
-                        ALTER TABLE {table} ADD CONSTRAINT {constraint_name} UNIQUE ({', '.join(conflict_cols)});
+                        ALTER TABLE {table}
+                        ADD CONSTRAINT {constraint_name} UNIQUE ({', '.join(conflict_cols)});
                     END IF;
                 END;
                 $$;
@@ -129,32 +145,31 @@ def save_to_postgres(df, columns_table, db_config, conflict_cols):
 
     conn.commit()
 
-    # Preparar dados
+    # 4. Preparar dados para insert
     cols = list(columns_table.keys())
     values = [tuple(row[col] for col in cols) for _, row in df.iterrows()]
 
-    insert_sql = f"""
-        INSERT INTO {table} ({', '.join(cols)})
-        VALUES %s
-    """
+    insert_sql = f"INSERT INTO {table} ({', '.join(cols)}) VALUES %s"
 
-    if conflict_cols:
+    if conflict_cols and mode == "update":
         update_assignments = ", ".join(
             [f"{col}=EXCLUDED.{col}" for col in cols if col not in conflict_cols]
         )
         insert_sql += f" ON CONFLICT ({', '.join(conflict_cols)}) DO UPDATE SET {update_assignments}"
+    elif conflict_cols and mode == "ignore":
+        insert_sql += f" ON CONFLICT ({', '.join(conflict_cols)}) DO NOTHING"
 
+    # 5. Executar inserção
     try:
         execute_values(cur, insert_sql, values)
         conn.commit()
-        print(f"✅ {len(values)} registros inseridos/atualizados em {table}!")
+        print(f"✅ {len(values)} registros inseridos em {table} (modo={mode})!")
     except Exception as e:
         print("❌ Erro ao inserir os dados:", e)
         raise e
     finally:
         cur.close()
         conn.close()
-
 
 def read_table(db_config, table, columns=None, filters=None):
     """
