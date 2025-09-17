@@ -11,16 +11,22 @@ sys.path.insert(0, '/opt/airflow/scripts')
 from utils import read_table
 
 
-def validate_silver_companies(db_config, table):
+def validate_bronze_companies(db_config, table):
 
-    """Valida dados silver de empresas"""
+    """Valida dados bronze de empresas"""
 
     df = read_table(db_config, table)
 
     schema = DataFrameSchema({
-        "cnpj": Column(str, unique=True, nullable=False),
-        "cod_porte": Column(str, checks=Check.isin(["00", "01", "03", "05"])),
-        "natureza_juridica": Column(int, checks=Check.in_range(1011, 9999), nullable=False)
+        "cnpj": Column(str, nullable=False, checks=[
+            Check.str_length(14, 14),  # CNPJ deve ter 14 dígitos
+            Check.str_matches(r'^\d+$')  # Apenas números
+        ]),
+        "razao_social": Column(str, nullable=False),
+        "natureza_juridica": Column(int, nullable=True),
+        "qualificacao_responsavel": Column(int, nullable=True),
+        "capital_social": Column(float, checks=Check.greater_than_or_equal_to(0)),
+        "cod_porte": Column(str, nullable=True)
     })
 
     try:
@@ -49,25 +55,20 @@ def validate_silver_companies(db_config, table):
     return True
 
 
-def validate_silver_partners(db_config, table):
+def validate_bronze_partners(db_config, table):
 
-    """Valida dados silver de sócios"""
+    """Valida dados bronze de sócios"""
 
     df = read_table(db_config, table)
 
-    # Forçar conversão para Int64 nullable (suporta NaNs)
-    df["codigo_qualificacao_socio"] = pd.to_numeric(
-        df["codigo_qualificacao_socio"], errors="coerce"
-    ).astype("Int64")
-
-    df["tipo_socio"] = pd.to_numeric(
-        df["tipo_socio"], errors="coerce"
-    ).astype("Int64")
-
     schema = DataFrameSchema({
-        "cnpj": Column(str, nullable=False),
-        "tipo_socio": Column("Int64", checks=Check.isin([1, 2, 3]), nullable=True),
-        "codigo_qualificacao_socio": Column("Int64", nullable=True),
+        "cnpj": Column(str, nullable=False, checks=Check.str_length(14, 14)),
+        "tipo_socio": Column(int, nullable=True),
+        "nome_socio": Column(str, nullable=True),
+        "documento_socio": Column(str, nullable=True, checks=[
+            Check.str_matches(r'^(\d{11}|\d{14}|9+)$')  # CPF, CNPJ ou '9' para estrangeiros
+        ]),
+        "codigo_qualificacao_socio": Column(str, nullable=True)
     })
 
     try:
@@ -106,8 +107,8 @@ def main():
             "port": int(os.environ["POSTGRES_PORT"]),
         }
 
-        validate_silver_companies(db_config, "silver_companies")
-        validate_silver_partners(db_config, "silver_partners")
+        validate_bronze_companies(db_config, "bronze_companies")
+        validate_bronze_partners(db_config, "bronze_partners")
 
         print("✅ Todas as validações passaram!")
 
