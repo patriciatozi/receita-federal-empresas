@@ -48,7 +48,8 @@ def main():
             "tipo_socio": "TEXT",
             "nome_socio": "TEXT",
             "documento_socio": "TEXT",
-            "codigo_qualificacao_socio": "TEXT"
+            "codigo_qualificacao_socio": "TEXT",
+            "last_update": "TEXT"
         }
 
         db_config = {
@@ -59,6 +60,8 @@ def main():
             "port": int(os.environ["POSTGRES_PORT"]),
             "table": "bronze_partners"
         }
+
+        df.to_parquet("./data/bronze/socios", engine="pyarrow", index=False, partition_cols=["last_update"])
 
         save_to_postgres(df, columns_table, db_config)
 

@@ -75,6 +75,8 @@ def get_source_data(
         low_memory=False
     )
 
+    df['last_update'] = last_updated_folder
+
     print("Total de linhas:", len(df))
 
     return df

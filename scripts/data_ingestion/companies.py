@@ -51,7 +51,8 @@ def main():
             "natureza_juridica": "BIGINT",
             "qualificacao_responsavel": "BIGINT",
             "capital_social": "TEXT",
-            "cod_porte": "TEXT"
+            "cod_porte": "TEXT",
+            "last_update": "TEXT"
         }
 
         db_config = {
@@ -63,12 +64,13 @@ def main():
             "table": "bronze_companies"
         }
 
+        df.to_parquet("./data/bronze/empresas", engine="pyarrow", index=False, partition_cols=["last_update"])
+
         save_to_postgres(df, columns_table, db_config, ["cnpj"])
 
     except Exception as e:
         print(f"❌ Erro no script: {e}")
         raise
-
 
 if __name__ == "__main__":
     main()

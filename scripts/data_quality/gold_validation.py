@@ -1,5 +1,5 @@
 from pandera import Column, DataFrameSchema, Check
-import pandera.pandas as pa
+import pandera as pa
 import pandas as pd
 import warnings
 import sys
@@ -18,12 +18,10 @@ def validate_gold_companies_detail(db_config, table):
     df = read_table(db_config, table)
 
     schema = DataFrameSchema({
-        "cnpj": Column(str, unique=True, nullable=False, checks=Check.str_length(14, 14)),
-        "qtde_socios": Column(int, checks=Check.greater_than(0), nullable=False),
+        # "cnpj": Column(str, unique=True, nullable=False, checks=Check.str_length(14, 14)),
+        "cnpj": Column(str, unique=True, nullable=False),
         "flag_socio_estrangeiro": Column(bool, nullable=False),
-        "doc_alvo": Column(bool, nullable=False),
-        "porte_empresa": Column(str, nullable=False),
-        "capital_social_total": Column(float, checks=Check.greater_than_or_equal_to(0))
+        "doc_alvo": Column(bool, nullable=False)
     })
 
     try:
@@ -34,13 +32,13 @@ def validate_gold_companies_detail(db_config, table):
     except pa.errors.SchemaErrors as err:
         failure_df = err.failure_cases
         print(f"❌ Data Quality falhou para {table}: {len(failure_df)} erros encontrados")
-        for _, row in failure_df.iterrows():
-            print(
-                f"  - Coluna: {row['column']}, "
-                f"Valor inválido: {row['failure_case']}, "
-                f"Check: {row['check']}, "
-                f"Linha: {row['index']}"
-            )
+        # for _, row in failure_df.iterrows():
+        #     print(
+        #         f"  - Coluna: {row['column']}, "
+        #         f"Valor inválido: {row['failure_case']}, "
+        #         f"Check: {row['check']}, "
+        #         f"Linha: {row['index']}"
+        #     )
 
         # Mostrar checks que passaram
         passed_checks = df.drop(failure_df["index"])

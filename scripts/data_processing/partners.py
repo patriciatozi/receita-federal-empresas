@@ -53,9 +53,9 @@ def main():
 
         df_processed = get_processed_partners(df)
 
-        duplicates = check_for_duplicates(df_processed)
+        not_duplicates = check_for_duplicates(df_processed)
 
-        if duplicates:
+        if not_duplicates:
 
             columns_table = {
                 "cnpj": "TEXT",

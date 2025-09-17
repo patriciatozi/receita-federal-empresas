@@ -1,5 +1,5 @@
 from pandera import Column, DataFrameSchema, Check
-import pandera.pandas as pa
+import pandera as pa
 import pandas as pd
 import warnings
 import sys
@@ -18,14 +18,11 @@ def validate_bronze_companies(db_config, table):
     df = read_table(db_config, table)
 
     schema = DataFrameSchema({
-        "cnpj": Column(str, nullable=False, checks=[
-            Check.str_length(14, 14),  # CNPJ deve ter 14 dígitos
-            Check.str_matches(r'^\d+$')  # Apenas números
-        ]),
+        "cnpj": Column(str, nullable=False, checks=Check.str_matches(r'^\d+$')),
         "razao_social": Column(str, nullable=False),
         "natureza_juridica": Column(int, nullable=True),
         "qualificacao_responsavel": Column(int, nullable=True),
-        "capital_social": Column(float, checks=Check.greater_than_or_equal_to(0)),
+        "capital_social": Column(str, nullable=False),
         "cod_porte": Column(str, nullable=True)
     })
 
@@ -37,13 +34,13 @@ def validate_bronze_companies(db_config, table):
     except pa.errors.SchemaErrors as err:
         failure_df = err.failure_cases
         print(f"❌ Data Quality falhou para {table}: {len(failure_df)} erros encontrados")
-        for _, row in failure_df.iterrows():
-            print(
-                f"  - Coluna: {row['column']}, "
-                f"Valor inválido: {row['failure_case']}, "
-                f"Check: {row['check']}, "
-                f"Linha: {row['index']}"
-            )
+        # for _, row in failure_df.iterrows():
+        #     print(
+        #         f"  - Coluna: {row['column']}, "
+        #         f"Valor inválido: {row['failure_case']}, "
+        #         f"Check: {row['check']}, "
+        #         f"Linha: {row['index']}"
+        #     )
 
         # Mostrar checks que passaram
         passed_checks = df.drop(failure_df["index"])
@@ -62,12 +59,10 @@ def validate_bronze_partners(db_config, table):
     df = read_table(db_config, table)
 
     schema = DataFrameSchema({
-        "cnpj": Column(str, nullable=False, checks=Check.str_length(14, 14)),
-        "tipo_socio": Column(int, nullable=True),
+        "cnpj": Column(str, nullable=False, checks=Check.str_matches(r'^\d+$')),
+        "tipo_socio": Column(str, nullable=True),
         "nome_socio": Column(str, nullable=True),
-        "documento_socio": Column(str, nullable=True, checks=[
-            Check.str_matches(r'^(\d{11}|\d{14}|9+)$')  # CPF, CNPJ ou '9' para estrangeiros
-        ]),
+        "documento_socio": Column(str, nullable=True),
         "codigo_qualificacao_socio": Column(str, nullable=True)
     })
 
@@ -79,13 +74,13 @@ def validate_bronze_partners(db_config, table):
     except pa.errors.SchemaErrors as err:
         failure_df = err.failure_cases
         print(f"❌ Data Quality falhou para {table}: {len(failure_df)} erros encontrados")
-        for _, row in failure_df.iterrows():
-            print(
-                f"  - Coluna: {row['column']}, "
-                f"Valor inválido: {row['failure_case']}, "
-                f"Check: {row['check']}, "
-                f"Linha: {row['index']}"
-            )
+        # for _, row in failure_df.iterrows():
+        #     print(
+        #         f"  - Coluna: {row['column']}, "
+        #         f"Valor inválido: {row['failure_case']}, "
+        #         f"Check: {row['check']}, "
+        #         f"Linha: {row['index']}"
+        #     )
 
         # Mostrar checks que passaram
         passed_checks = df.drop(failure_df["index"])

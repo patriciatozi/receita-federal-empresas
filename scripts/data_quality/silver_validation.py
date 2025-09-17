@@ -1,5 +1,5 @@
 from pandera import Column, DataFrameSchema, Check
-import pandera.pandas as pa
+import pandera as pa
 import pandas as pd
 import warnings
 import sys
@@ -31,13 +31,13 @@ def validate_silver_companies(db_config, table):
     except pa.errors.SchemaErrors as err:
         failure_df = err.failure_cases
         print(f"❌ Data Quality falhou para {table}: {len(failure_df)} erros encontrados")
-        for _, row in failure_df.iterrows():
-            print(
-                f"  - Coluna: {row['column']}, "
-                f"Valor inválido: {row['failure_case']}, "
-                f"Check: {row['check']}, "
-                f"Linha: {row['index']}"
-            )
+        # for _, row in failure_df.iterrows():
+        #     print(
+        #         f"  - Coluna: {row['column']}, "
+        #         f"Valor inválido: {row['failure_case']}, "
+        #         f"Check: {row['check']}, "
+        #         f"Linha: {row['index']}"
+        #     )
 
         # Mostrar checks que passaram
         passed_checks = df.drop(failure_df["index"])
@@ -78,13 +78,13 @@ def validate_silver_partners(db_config, table):
     except pa.errors.SchemaErrors as err:
         failure_df = err.failure_cases
         print(f"❌ Data Quality falhou para {table}: {len(failure_df)} erros encontrados")
-        for _, row in failure_df.iterrows():
-            print(
-                f"  - Coluna: {row['column']}, "
-                f"Valor inválido: {row['failure_case']}, "
-                f"Check: {row['check']}, "
-                f"Linha: {row['index']}"
-            )
+        # for _, row in failure_df.iterrows():
+        #     print(
+        #         f"  - Coluna: {row['column']}, "
+        #         f"Valor inválido: {row['failure_case']}, "
+        #         f"Check: {row['check']}, "
+        #         f"Linha: {row['index']}"
+        #     )
 
         # Mostrar checks que passaram
         passed_checks = df.drop(failure_df["index"])

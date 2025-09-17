@@ -35,9 +35,9 @@ def main():
 
         df_processed = get_processed_companies(df)
 
-        duplicates = check_for_duplicates(df_processed)
+        not_duplicates = check_for_duplicates(df_processed)
 
-        if duplicates:
+        if not_duplicates:
 
             columns_table = {
                 "cnpj": "TEXT",
