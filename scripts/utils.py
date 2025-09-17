@@ -7,7 +7,9 @@ import io
 import psycopg2
 import pandas as pd
 from dotenv import load_dotenv
-from psycopg2.extras import execute_values  # para inserção em lote eficiente
+from psycopg2.extras import execute_values
+from sqlalchemy import create_engine
+from sqlalchemy.engine.url import URL
 
 # Carrega variáveis do .env
 load_dotenv()
@@ -217,3 +219,26 @@ def check_for_duplicates(df):
     else:
         print("Não existem CNPJs duplicados")
         return True
+    
+def get_database_engine():
+    """Cria engine de conexão com o PostgreSQL usando variáveis de ambiente"""
+    db_config = {
+        'drivername': 'postgresql',
+        'host': os.getenv('POSTGRES_HOST', 'postgres'),
+        'port': os.getenv('POSTGRES_PORT', '5432'),
+        'username': os.getenv('POSTGRES_USER', 'airflow'),
+        'password': os.getenv('POSTGRES_PASSWORD', 'airflow'),
+        'database': os.getenv('POSTGRES_DB', 'airflow')
+    }
+    
+    # Cria a URL de conexão
+    db_url = URL.create(**db_config)
+    
+    # Cria o engine
+    engine = create_engine(db_url)
+    
+    return engine
+
+def get_connection_string():
+    """Retorna a string de conexão formatada"""
+    return f"postgresql://{os.getenv('POSTGRES_USER')}:{os.getenv('POSTGRES_PASSWORD')}@{os.getenv('POSTGRES_HOST')}:{os.getenv('POSTGRES_PORT')}/{os.getenv('POSTGRES_DB')}"
