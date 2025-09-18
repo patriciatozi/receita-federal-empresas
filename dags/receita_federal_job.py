@@ -1,8 +1,9 @@
+from airflow.operators.python import PythonOperator
 from datetime import datetime, timedelta
 from airflow import DAG
-from airflow.operators.python import PythonOperator
 import subprocess
 import os
+
 
 default_args = {
     'owner': 'airflow',
@@ -11,7 +12,9 @@ default_args = {
 }
 
 def run_python_script(script_path: str):
+
     """Executa um script Python externo, logando saída e erros."""
+
     if not os.path.exists(script_path):
         raise FileNotFoundError(f"Script não encontrado: {script_path}")
 
@@ -32,7 +35,6 @@ def run_python_script(script_path: str):
 
     print("Script executado com sucesso!")
 
-# Caminhos dos scripts organizados por camada e nome
 script_tasks = {
     "bronze_companies": "/opt/airflow/scripts/data_ingestion/companies.py",
     "bronze_partners": "/opt/airflow/scripts/data_ingestion/partners.py",
@@ -45,13 +47,12 @@ script_tasks = {
 }
 
 with DAG(
-    'main_pipeline',
+    'receita_federal_job',
     default_args=default_args,
     start_date=datetime(2024, 1, 1),
     catchup=False,
 ) as dag:
 
-    # Cria os operadores dinamicamente
     tasks = {
         name: PythonOperator(
             task_id=name,
@@ -61,7 +62,6 @@ with DAG(
         for name, path in script_tasks.items()
     }
 
-    # Define as dependências
     [tasks["bronze_companies"], tasks["bronze_partners"]] >> tasks["bronze_layer_dq"]
     tasks["bronze_layer_dq"] >> [tasks["silver_companies"], tasks["silver_partners"]]
     [tasks["silver_companies"], tasks["silver_partners"]] >> tasks["silver_layer_dq"]
