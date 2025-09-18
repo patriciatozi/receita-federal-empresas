@@ -52,7 +52,7 @@ def main():
                 "doc_alvo": "BOOLEAN"
             }
 
-            save_to_postgres(df_processed, columns_table, ["cnpj"])
+            save_to_postgres(df_processed, "gold_companies_detail", columns_table, ["cnpj"])
 
     except Exception as e:
         print(f"❌ Erro no script: {e}")

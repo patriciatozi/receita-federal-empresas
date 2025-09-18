@@ -257,7 +257,36 @@ services:
       _PIP_ADDITIONAL_REQUIREMENTS: ''
     user: "0:0"
 
+  superset:
+    build:
+      context: .
+      dockerfile: Dockerfile.superset
+    container_name: superset
+    environment:
+      SUPERSET_SECRET_KEY: superset_secret_key
+      SUPERSET_LOAD_EXAMPLES: no
+      SUPERSET_ADMIN_USERNAME: admin
+      SUPERSET_ADMIN_PASSWORD: admin
+      SUPERSET_ADMIN_EMAIL: admin@superset.com
+      SUPERSET_DB_USER: airflow
+      SUPERSET_DB_PASSWORD: airflow
+      SUPERSET_DB_HOST: postgres
+      SUPERSET_DB_PORT: 5432
+      SUPERSET_DB_NAME: airflow
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8088:8088"
+    volumes:
+      - superset_home:/app/superset_home
+    command: >
+      sh -c "superset db upgrade &&
+             superset fab create-admin --username $$SUPERSET_ADMIN_USERNAME --password $$SUPERSET_ADMIN_PASSWORD --firstname Admin --lastname User --email $$SUPERSET_ADMIN_EMAIL || true &&
+             superset init &&
+             superset run -h 0.0.0.0 -p 8088 --with-threads --reload --debug"
 
 volumes:
   postgres-db-volume:
-  airflow-data: 
+  airflow-data:
+  superset_home:

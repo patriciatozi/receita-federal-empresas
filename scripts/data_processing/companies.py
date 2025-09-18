@@ -40,7 +40,7 @@ def main():
                 "cod_porte": "TEXT"
             }
 
-            save_to_postgres(df_processed, columns_table, ["cnpj"])
+            save_to_postgres(df_processed, "silver_companies", columns_table, ["cnpj"])
 
     except Exception as e:
         print(f"❌ Erro no script: {e}")

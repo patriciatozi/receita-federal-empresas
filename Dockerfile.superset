@@ -1,0 +1,15 @@
+FROM --platform=linux/amd64 apache/superset:3.0.1
+
+# Instalar dependências extras
+USER root
+RUN apt-get update && apt-get install -y \
+    gcc g++ make python3-dev libpq-dev \
+    && apt-get clean
+
+# Instalar pacotes Python extras
+RUN pip install --no-cache-dir pandas psycopg2-binary
+
+USER superset
+EXPOSE 8088
+
+CMD ["superset", "run", "-p", "8088", "--with-threads", "--reload", "--debugger"]
