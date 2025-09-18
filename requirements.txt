@@ -16,6 +16,15 @@ psycopg2-binary>=2.9,<3.0
 requests>=2.31,<3.0
 beautifulsoup4>=4.12,<5.0
 
+# Testing frameworks
+pytest>=8.3,<9.0
+pytest-cov>=5.0,<6.0
+pytest-mock>=3.14,<4.0
+pytest-xdist>=3.5,<4.0
+
+# Environment management
+python-dotenv>=1.0,<2.0
+
 # Fixes de compatibilidade Airflow
 Flask<2.3
 connexion[swagger-ui]<3

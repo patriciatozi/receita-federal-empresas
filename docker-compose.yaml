@@ -108,7 +108,25 @@ services:
       airflow-init:
         condition: service_completed_successfully
 
-
+  airflow-tests:
+    <<: *airflow-common
+    container_name: airflow-tests
+    command: >
+      bash -c "echo '🚀 Ambiente de testes pronto!' && 
+             echo 'Para executar testes:' && 
+             echo '  docker exec -it airflow-tests pytest /opt/airflow/tests -v' &&
+             echo '  docker exec -it airflow-tests pytest /opt/airflow/tests --cov=scripts --cov-report=html' &&
+             tail -f /dev/null"
+    volumes:
+      - ${AIRFLOW_PROJ_DIR:-.}/tests:/opt/airflow/tests
+      - ${AIRFLOW_PROJ_DIR:-.}/scripts:/opt/airflow/scripts
+    environment:
+      <<: *airflow-common-env
+      PYTHONPATH: /opt/airflow/scripts:/opt/airflow/tests
+    profiles: ["test"]
+    stdin_open: true
+    tty: true
+    
   airflow-init:
     <<: *airflow-common
     entrypoint: /bin/bash

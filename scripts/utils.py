@@ -88,7 +88,8 @@ def get_last_update():
 def get_source_data(
     key,
     file_columns,
-    file_dtypes
+    file_dtypes,
+    test_mode=False
 ):
     
     """
@@ -98,18 +99,22 @@ def get_source_data(
         key (str): Tipo de arquivo ('Empresas', 'Socios', 'Estabelecimentos')
         file_columns (list): Lista de nomes de colunas para o DataFrame
         file_dtypes (dict): Dicionário com tipos de dados das colunas
+        test_mode (bool): Modo teste (evita chamadas HTTP reais)
         
     Returns:
         pd.DataFrame: DataFrame com os dados processados
         
     Raises:
         Exception: Se houver erro no download ou processamento do arquivo
-        
-    Example:
-        >>> colunas = ['cnpj', 'razao_social', 'natureza_juridica']
-        >>> tipos = {'cnpj': str, 'razao_social': str}
-        >>> df = get_source_data('Empresas', colunas, tipos)
     """
+
+    if test_mode:
+        # Retorna dados de teste sem fazer HTTP
+        return pd.DataFrame({
+            'cnpj': ['12345678000195', '98765432000187'],
+            'razao_social': ['Empresa Teste A', 'Empresa Teste B'],
+            'last_update': '2025-09'
+        })
     
     endpoint = os.environ.get("MAIN_ENDPOINT", "https://arquivos.receitafederal.gov.br/dados/cnpj/dados_abertos_cnpj/")
 
