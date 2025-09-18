@@ -1,10 +1,9 @@
 import sys
 import os
-import psycopg2
 
 sys.path.insert(0, '/opt/airflow/scripts')
 
-from utils import get_source_data, save_to_postgres
+from utils import get_source_data, save_to_postgres, save_df_to_parquet
 
 def get_partners():
     endpoint = "https://arquivos.receitafederal.gov.br/dados/cnpj/dados_abertos_cnpj/"
@@ -52,18 +51,9 @@ def main():
             "last_update": "TEXT"
         }
 
-        db_config = {
-            "host": os.environ["POSTGRES_HOST"],
-            "dbname": os.environ["POSTGRES_DB"],
-            "user": os.environ["POSTGRES_USER"],
-            "password": os.environ["POSTGRES_PASSWORD"],
-            "port": int(os.environ["POSTGRES_PORT"]),
-            "table": "bronze_partners"
-        }
+        save_df_to_parquet("./data/bronze/socios", df, ["last_update"])
 
-        df.to_parquet("./data/bronze/socios", engine="pyarrow", index=False, partition_cols=["last_update"])
-
-        save_to_postgres(df, columns_table, db_config)
+        save_to_postgres(df, "bronze_partners", columns_table)
 
     except Exception as e:
         print(f"❌ Erro no script: {e}")

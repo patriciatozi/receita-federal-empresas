@@ -40,16 +40,8 @@ def get_processed_partners(df):
 def main():
     """Função principal para execução direta do script"""
     try:
-        db_config = {
-            "host": os.environ["POSTGRES_HOST"],
-            "dbname": os.environ["POSTGRES_DB"],
-            "user": os.environ["POSTGRES_USER"],
-            "password": os.environ["POSTGRES_PASSWORD"],
-            "port": int(os.environ["POSTGRES_PORT"]),
-            "table": "silver_partners"
-        }
 
-        df = read_table(db_config, "bronze_partners")
+        df = read_table("bronze_partners")
 
         df_processed = get_processed_partners(df)
 
@@ -66,7 +58,7 @@ def main():
                 "flag_socio_estrangeiro": "BIGINT"
             }
 
-            save_to_postgres(df_processed, columns_table, db_config, ["cnpj", "documento_socio"])
+            save_to_postgres(df_processed, "silver_partners", columns_table, ["cnpj", "documento_socio"])
 
     except Exception as e:
         print(f"❌ Erro no script: {e}")

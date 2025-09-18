@@ -22,16 +22,8 @@ def get_processed_companies(df):
 def main():
     """Função principal para execução direta do script"""
     try:
-        db_config = {
-            "host": os.environ["POSTGRES_HOST"],
-            "dbname": os.environ["POSTGRES_DB"],
-            "user": os.environ["POSTGRES_USER"],
-            "password": os.environ["POSTGRES_PASSWORD"],
-            "port": int(os.environ["POSTGRES_PORT"]),
-            "table": "silver_companies"
-        }
 
-        df = read_table(db_config, "bronze_companies")
+        df = read_table("bronze_companies")
 
         df_processed = get_processed_companies(df)
 
@@ -48,7 +40,7 @@ def main():
                 "cod_porte": "TEXT"
             }
 
-            save_to_postgres(df_processed, columns_table, db_config, ["cnpj"])
+            save_to_postgres(df_processed, columns_table, ["cnpj"])
 
     except Exception as e:
         print(f"❌ Erro no script: {e}")

@@ -1,17 +1,15 @@
+from psycopg2.extras import execute_values
+from sqlalchemy import create_engine
+from sqlalchemy.engine.url import URL
+from dotenv import load_dotenv
 from bs4 import BeautifulSoup
 import pandas as pd
+import psycopg2
 import requests
 import zipfile
 import re
 import io
-import psycopg2
-import pandas as pd
-from dotenv import load_dotenv
-from psycopg2.extras import execute_values
-from sqlalchemy import create_engine
-from sqlalchemy.engine.url import URL
-
-# Carrega variáveis do .env
+import os
 load_dotenv()
 
 def get_response(url):
@@ -61,7 +59,7 @@ def get_source_data(
 
     z = zipfile.ZipFile(io.BytesIO(last_file.content))
 
-    csv_name = z.namelist()[0]  # pega o primeiro arquivo dentro do zip
+    csv_name = z.namelist()[0] 
     print("Arquivo dentro do ZIP:", csv_name)
 
     df = pd.read_csv(
@@ -81,7 +79,7 @@ def get_source_data(
 
     return df
 
-def save_to_postgres(df, columns_table, db_config, conflict_cols=None, mode="update"):
+def save_to_postgres(df, table, columns_table, conflict_cols=None, mode="update"):
     """
     Salva DataFrame no Postgres de forma idempotente.
 
@@ -93,26 +91,15 @@ def save_to_postgres(df, columns_table, db_config, conflict_cols=None, mode="upd
         mode (str): "update" para upsert, "ignore" para ignorar duplicados, None para sempre inserir.
     """
 
-    # 1. Substituir <NA> (pd.NA / NAType) e NaN por None (compatível com psycopg2/Postgres)
     df = df.astype(object).where(pd.notna(df), None)
 
-    conn = psycopg2.connect(
-        host=db_config["host"],
-        dbname=db_config["dbname"],
-        user=db_config["user"],
-        password=db_config["password"],
-        port=db_config["port"],
-    )
+    conn = get_database_connection()
     cur = conn.cursor()
 
-    table = db_config["table"]
-
-    # 2. Criar tabela se não existir
     col_defs = [f"{col} {dtype}" for col, dtype in columns_table.items()]
     create_table_sql = f"CREATE TABLE IF NOT EXISTS {table} ({', '.join(col_defs)})"
     cur.execute(create_table_sql)
 
-    # 3. Garantir constraints para ON CONFLICT
     if conflict_cols:
         if len(conflict_cols) == 1:
             col = conflict_cols[0]
@@ -149,7 +136,6 @@ def save_to_postgres(df, columns_table, db_config, conflict_cols=None, mode="upd
 
     conn.commit()
 
-    # 4. Preparar dados para insert
     cols = list(columns_table.keys())
     values = [tuple(row[col] for col in cols) for _, row in df.iterrows()]
 
@@ -163,7 +149,6 @@ def save_to_postgres(df, columns_table, db_config, conflict_cols=None, mode="upd
     elif conflict_cols and mode == "ignore":
         insert_sql += f" ON CONFLICT ({', '.join(conflict_cols)}) DO NOTHING"
 
-    # 5. Executar inserção
     try:
         execute_values(cur, insert_sql, values)
         conn.commit()
@@ -175,9 +160,10 @@ def save_to_postgres(df, columns_table, db_config, conflict_cols=None, mode="upd
         cur.close()
         conn.close()
 
-def read_table(db_config, table, columns=None, filters=None):
+def read_table(table, columns=None, filters=None):
+
     """
-    Lê uma tabela do PostgreSQL e retorna um DataFrame.
+    Faz a leitura de uma tabela do PostgreSQL e retorna um DataFrame.
 
     Args:
         db_config (dict): Dicionário com chaves 'host', 'port', 'dbname', 'user', 'password'.
@@ -188,22 +174,14 @@ def read_table(db_config, table, columns=None, filters=None):
     Returns:
         pd.DataFrame: DataFrame com os dados da tabela.
     """
-    # Define colunas
+
     cols_sql = ", ".join(columns) if columns else "*"
-    
-    # Monta query
+
     query = f"SELECT {cols_sql} FROM {table}"
     if filters:
         query += f" WHERE {filters}"
-    
-    # Conecta ao banco
-    conn = psycopg2.connect(
-        host=db_config['host'],
-        port=db_config["port"],
-        dbname=db_config['dbname'],
-        user=db_config['user'],
-        password=db_config['password']
-    )
+
+    conn = get_database_connection()
     
     try:
         df = pd.read_sql(query, conn)
@@ -222,25 +200,42 @@ def check_for_duplicates(df):
         print("Não existem CNPJs duplicados")
         return True
     
-def get_database_engine():
-    """Cria engine de conexão com o PostgreSQL usando variáveis de ambiente"""
+def get_database_connection():
+
+    """Cria a conexão com o PostgreSQL usando variáveis de ambiente"""
+
     db_config = {
-        'drivername': 'postgresql',
-        'host': os.getenv('POSTGRES_HOST', 'postgres'),
-        'port': os.getenv('POSTGRES_PORT', '5432'),
-        'username': os.getenv('POSTGRES_USER', 'airflow'),
-        'password': os.getenv('POSTGRES_PASSWORD', 'airflow'),
-        'database': os.getenv('POSTGRES_DB', 'airflow')
-    }
+            "host": os.environ["POSTGRES_HOST"],
+            "dbname": os.environ["POSTGRES_DB"],
+            "user": os.environ["POSTGRES_USER"],
+            "password": os.environ["POSTGRES_PASSWORD"],
+            "port": int(os.environ["POSTGRES_PORT"]),
+        }
     
-    # Cria a URL de conexão
-    db_url = URL.create(**db_config)
+    conn = psycopg2.connect(
+        host=db_config['host'],
+        port=db_config["port"],
+        dbname=db_config['dbname'],
+        user=db_config['user'],
+        password=db_config['password']
+    )
     
-    # Cria o engine
-    engine = create_engine(db_url)
-    
-    return engine
+    return conn
 
 def get_connection_string():
+
     """Retorna a string de conexão formatada"""
+
     return f"postgresql://{os.getenv('POSTGRES_USER')}:{os.getenv('POSTGRES_PASSWORD')}@{os.getenv('POSTGRES_HOST')}:{os.getenv('POSTGRES_PORT')}/{os.getenv('POSTGRES_DB')}"
+
+def save_df_to_parquet(path, df, partition_by):
+
+    try:
+
+        df.to_parquet(f"{path}", engine="pyarrow", index=False, partition_cols=partition_by)
+
+        print(f"✅ Arquivo gravado no diretório {path} com sucesso!!")
+
+    except Exception as e:
+        print(f"❌ Erro ao gravar o arquivo no diretório {path}:", e)
+        raise e

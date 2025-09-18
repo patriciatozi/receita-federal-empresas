@@ -11,11 +11,11 @@ sys.path.insert(0, '/opt/airflow/scripts')
 from utils import read_table
 
 
-def validate_silver_companies(db_config, table):
+def validate_silver_companies(table):
 
     """Valida dados silver de empresas"""
 
-    df = read_table(db_config, table)
+    df = read_table(table)
 
     schema = DataFrameSchema({
         "cnpj": Column(str, unique=True, nullable=False),
@@ -31,13 +31,6 @@ def validate_silver_companies(db_config, table):
     except pa.errors.SchemaErrors as err:
         failure_df = err.failure_cases
         print(f"❌ Data Quality falhou para {table}: {len(failure_df)} erros encontrados")
-        # for _, row in failure_df.iterrows():
-        #     print(
-        #         f"  - Coluna: {row['column']}, "
-        #         f"Valor inválido: {row['failure_case']}, "
-        #         f"Check: {row['check']}, "
-        #         f"Linha: {row['index']}"
-        #     )
 
         # Mostrar checks que passaram
         passed_checks = df.drop(failure_df["index"])
@@ -49,11 +42,11 @@ def validate_silver_companies(db_config, table):
     return True
 
 
-def validate_silver_partners(db_config, table):
+def validate_silver_partners(table):
 
     """Valida dados silver de sócios"""
 
-    df = read_table(db_config, table)
+    df = read_table(table)
 
     # Forçar conversão para Int64 nullable (suporta NaNs)
     df["codigo_qualificacao_socio"] = pd.to_numeric(
@@ -78,13 +71,6 @@ def validate_silver_partners(db_config, table):
     except pa.errors.SchemaErrors as err:
         failure_df = err.failure_cases
         print(f"❌ Data Quality falhou para {table}: {len(failure_df)} erros encontrados")
-        # for _, row in failure_df.iterrows():
-        #     print(
-        #         f"  - Coluna: {row['column']}, "
-        #         f"Valor inválido: {row['failure_case']}, "
-        #         f"Check: {row['check']}, "
-        #         f"Linha: {row['index']}"
-        #     )
 
         # Mostrar checks que passaram
         passed_checks = df.drop(failure_df["index"])
@@ -98,16 +84,9 @@ def validate_silver_partners(db_config, table):
 
 def main():
     try:
-        db_config = {
-            "host": os.environ["POSTGRES_HOST"],
-            "dbname": os.environ["POSTGRES_DB"],
-            "user": os.environ["POSTGRES_USER"],
-            "password": os.environ["POSTGRES_PASSWORD"],
-            "port": int(os.environ["POSTGRES_PORT"]),
-        }
 
-        validate_silver_companies(db_config, "silver_companies")
-        validate_silver_partners(db_config, "silver_partners")
+        validate_silver_companies("silver_companies")
+        validate_silver_partners("silver_partners")
 
         print("✅ Todas as validações passaram!")
 

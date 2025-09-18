@@ -10,241 +10,39 @@ default_args = {
     'retry_delay': timedelta(minutes=5),
 }
 
-def get_bronze_companies():
-    """Executa o script Python usando subprocess com caminho absoluto"""
-    # Caminho absoluto direto
-    script_path = '/opt/airflow/scripts/data_ingestion/companies.py'
-    print("ok")
-    
-    # Verifica se o arquivo existe
+def run_python_script(script_path: str):
+    """Executa um script Python externo, logando saída e erros."""
     if not os.path.exists(script_path):
         raise FileNotFoundError(f"Script não encontrado: {script_path}")
-    
+
     print(f"Executando script: {script_path}")
-    
-    # Executa o script
     result = subprocess.run(
-        ['python', script_path], 
-        capture_output=True, 
+        ['python', script_path],
+        capture_output=True,
         text=True,
-        cwd='/opt/airflow/scripts'  # Executa no diretório do script
+        cwd='/opt/airflow/scripts'
     )
-    
-    # Log da saída
+
     print("STDOUT:", result.stdout)
     if result.stderr:
         print("STDERR:", result.stderr)
-    
+
     if result.returncode != 0:
         raise Exception(f"Script falhou com código {result.returncode}")
-    
+
     print("Script executado com sucesso!")
 
-def get_bronze_partners():
-    """Executa o script Python usando subprocess com caminho absoluto"""
-    # Caminho absoluto direto
-    script_path = '/opt/airflow/scripts/data_ingestion/partners.py'
-    
-    # Verifica se o arquivo existe
-    if not os.path.exists(script_path):
-        raise FileNotFoundError(f"Script não encontrado: {script_path}")
-    
-    print(f"Executando script: {script_path}")
-    
-    # Executa o script
-    result = subprocess.run(
-        ['python', script_path], 
-        capture_output=True, 
-        text=True,
-        cwd='/opt/airflow/scripts'  # Executa no diretório do script
-    )
-    
-    # Log da saída
-    print("STDOUT:", result.stdout)
-    if result.stderr:
-        print("STDERR:", result.stderr)
-    
-    if result.returncode != 0:
-        raise Exception(f"Script falhou com código {result.returncode}")
-    
-    print("Script executado com sucesso!")
-
-def get_silver_companies():
-    """Executa o script Python usando subprocess com caminho absoluto"""
-    # Caminho absoluto direto
-    script_path = '/opt/airflow/scripts/data_processing/companies.py'
-    
-    # Verifica se o arquivo existe
-    if not os.path.exists(script_path):
-        raise FileNotFoundError(f"Script não encontrado: {script_path}")
-    
-    print(f"Executando script: {script_path}")
-    
-    # Executa o script
-    result = subprocess.run(
-        ['python', script_path], 
-        capture_output=True, 
-        text=True,
-        cwd='/opt/airflow/scripts'  # Executa no diretório do script
-    )
-    
-    # Log da saída
-    print("STDOUT:", result.stdout)
-    if result.stderr:
-        print("STDERR:", result.stderr)
-    
-    if result.returncode != 0:
-        raise Exception(f"Script falhou com código {result.returncode}")
-    
-    print("Script executado com sucesso!")
-
-def get_silver_partners():
-    """Executa o script Python usando subprocess com caminho absoluto"""
-    # Caminho absoluto direto
-    script_path = '/opt/airflow/scripts/data_processing/partners.py'
-    
-    # Verifica se o arquivo existe
-    if not os.path.exists(script_path):
-        raise FileNotFoundError(f"Script não encontrado: {script_path}")
-    
-    print(f"Executando script: {script_path}")
-    
-    # Executa o script
-    result = subprocess.run(
-        ['python', script_path], 
-        capture_output=True, 
-        text=True,
-        cwd='/opt/airflow/scripts'  # Executa no diretório do script
-    )
-    
-    # Log da saída
-    print("STDOUT:", result.stdout)
-    if result.stderr:
-        print("STDERR:", result.stderr)
-    
-    if result.returncode != 0:
-        raise Exception(f"Script falhou com código {result.returncode}")
-    
-    print("Script executado com sucesso!")
-
-def get_gold_companies_detail():
-    """Executa o script Python usando subprocess com caminho absoluto"""
-    # Caminho absoluto direto
-    script_path = '/opt/airflow/scripts/data_refinement/companies_detail.py'
-    
-    # Verifica se o arquivo existe
-    if not os.path.exists(script_path):
-        raise FileNotFoundError(f"Script não encontrado: {script_path}")
-    
-    print(f"Executando script: {script_path}")
-    
-    # Executa o script
-    result = subprocess.run(
-        ['python', script_path], 
-        capture_output=True, 
-        text=True,
-        cwd='/opt/airflow/scripts'  # Executa no diretório do script
-    )
-    
-    # Log da saída
-    print("STDOUT:", result.stdout)
-    if result.stderr:
-        print("STDERR:", result.stderr)
-    
-    if result.returncode != 0:
-        raise Exception(f"Script falhou com código {result.returncode}")
-    
-    print("Script executado com sucesso!")
-
-def get_bronze_layer_dq():
-    """Executa o script Python usando subprocess com caminho absoluto"""
-    # Caminho absoluto direto
-    script_path = '/opt/airflow/scripts/data_quality/bronze_validation.py'
-    print("ok")
-    
-    # Verifica se o arquivo existe
-    if not os.path.exists(script_path):
-        raise FileNotFoundError(f"Script não encontrado: {script_path}")
-    
-    print(f"Executando script: {script_path}")
-    
-    # Executa o script
-    result = subprocess.run(
-        ['python', script_path], 
-        capture_output=True, 
-        text=True,
-        cwd='/opt/airflow/scripts'  # Executa no diretório do script
-    )
-    
-    # Log da saída
-    print("STDOUT:", result.stdout)
-    if result.stderr:
-        print("STDERR:", result.stderr)
-    
-    if result.returncode != 0:
-        raise Exception(f"Script falhou com código {result.returncode}")
-    
-    print("Script executado com sucesso!")
-
-def get_silver_layer_dq():
-    """Executa o script Python usando subprocess com caminho absoluto"""
-    # Caminho absoluto direto
-    script_path = '/opt/airflow/scripts/data_quality/silver_validation.py'
-    print("ok")
-    
-    # Verifica se o arquivo existe
-    if not os.path.exists(script_path):
-        raise FileNotFoundError(f"Script não encontrado: {script_path}")
-    
-    print(f"Executando script: {script_path}")
-    
-    # Executa o script
-    result = subprocess.run(
-        ['python', script_path], 
-        capture_output=True, 
-        text=True,
-        cwd='/opt/airflow/scripts'  # Executa no diretório do script
-    )
-    
-    # Log da saída
-    print("STDOUT:", result.stdout)
-    if result.stderr:
-        print("STDERR:", result.stderr)
-    
-    if result.returncode != 0:
-        raise Exception(f"Script falhou com código {result.returncode}")
-    
-    print("Script executado com sucesso!")
-
-def get_gold_layer_dq():
-    """Executa o script Python usando subprocess com caminho absoluto"""
-    # Caminho absoluto direto
-    script_path = '/opt/airflow/scripts/data_quality/gold_validation.py'
-    print("ok")
-    
-    # Verifica se o arquivo existe
-    if not os.path.exists(script_path):
-        raise FileNotFoundError(f"Script não encontrado: {script_path}")
-    
-    print(f"Executando script: {script_path}")
-    
-    # Executa o script
-    result = subprocess.run(
-        ['python', script_path], 
-        capture_output=True, 
-        text=True,
-        cwd='/opt/airflow/scripts'  # Executa no diretório do script
-    )
-    
-    # Log da saída
-    print("STDOUT:", result.stdout)
-    if result.stderr:
-        print("STDERR:", result.stderr)
-    
-    if result.returncode != 0:
-        raise Exception(f"Script falhou com código {result.returncode}")
-    
-    print("Script executado com sucesso!")
+# Caminhos dos scripts organizados por camada e nome
+script_tasks = {
+    "bronze_companies": "/opt/airflow/scripts/data_ingestion/companies.py",
+    "bronze_partners": "/opt/airflow/scripts/data_ingestion/partners.py",
+    "bronze_layer_dq": "/opt/airflow/scripts/data_quality/bronze_validation.py",
+    "silver_companies": "/opt/airflow/scripts/data_processing/companies.py",
+    "silver_partners": "/opt/airflow/scripts/data_processing/partners.py",
+    "silver_layer_dq": "/opt/airflow/scripts/data_quality/silver_validation.py",
+    "gold_companies_detail": "/opt/airflow/scripts/data_refinement/companies_detail.py",
+    "gold_layer_dq": "/opt/airflow/scripts/data_quality/gold_validation.py",
+}
 
 with DAG(
     'main_pipeline',
@@ -253,49 +51,18 @@ with DAG(
     catchup=False,
 ) as dag:
 
-    bronze_companies_task = PythonOperator(
-        task_id='bronze_companies',
-        python_callable=get_bronze_companies,
-    )
+    # Cria os operadores dinamicamente
+    tasks = {
+        name: PythonOperator(
+            task_id=name,
+            python_callable=run_python_script,
+            op_args=[path],
+        )
+        for name, path in script_tasks.items()
+    }
 
-    bronze_partners_task = PythonOperator(
-        task_id='bronze_partners',
-        python_callable=get_bronze_partners,
-    )
-
-    bronze_layer_dq = PythonOperator(
-        task_id='bronze_layer_dq',
-        python_callable=get_bronze_layer_dq,
-    )
-
-    silver_companies_task = PythonOperator(
-        task_id='silver_companies',
-        python_callable=get_silver_companies,
-    )
-
-    silver_partners_task = PythonOperator(
-        task_id='silver_partners',
-        python_callable=get_silver_partners,
-    )
-
-    silver_layer_dq = PythonOperator(
-        task_id='silver_layer_dq',
-        python_callable=get_silver_layer_dq,
-    )
-
-    gold_companies_task = PythonOperator(
-        task_id='gold_companies_detail',
-        python_callable=get_gold_companies_detail,
-    )
-
-    gold_layer_dq = PythonOperator(
-        task_id='gold_layer_dq',
-        python_callable=get_gold_layer_dq,
-    )
-
-
-    [bronze_companies_task, bronze_partners_task] >> bronze_layer_dq
-    bronze_layer_dq >> silver_companies_task
-    bronze_layer_dq >> silver_partners_task
-    [silver_companies_task, silver_partners_task] >> silver_layer_dq
-    silver_layer_dq >> gold_companies_task >> gold_layer_dq
+    # Define as dependências
+    [tasks["bronze_companies"], tasks["bronze_partners"]] >> tasks["bronze_layer_dq"]
+    tasks["bronze_layer_dq"] >> [tasks["silver_companies"], tasks["silver_partners"]]
+    [tasks["silver_companies"], tasks["silver_partners"]] >> tasks["silver_layer_dq"]
+    tasks["silver_layer_dq"] >> tasks["gold_companies_detail"] >> tasks["gold_layer_dq"]

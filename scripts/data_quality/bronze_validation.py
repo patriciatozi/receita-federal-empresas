@@ -11,11 +11,11 @@ sys.path.insert(0, '/opt/airflow/scripts')
 from utils import read_table
 
 
-def validate_bronze_companies(db_config, table):
+def validate_bronze_companies(table):
 
     """Valida dados bronze de empresas"""
 
-    df = read_table(db_config, table)
+    df = read_table(table)
 
     schema = DataFrameSchema({
         "cnpj": Column(str, nullable=False, checks=Check.str_matches(r'^\d+$')),
@@ -27,22 +27,14 @@ def validate_bronze_companies(db_config, table):
     })
 
     try:
-        # Validar e acumular erros
+        
         schema.validate(df, lazy=True)
         print(f"✅ Todos os checks passaram para {table}!")
 
     except pa.errors.SchemaErrors as err:
         failure_df = err.failure_cases
         print(f"❌ Data Quality falhou para {table}: {len(failure_df)} erros encontrados")
-        # for _, row in failure_df.iterrows():
-        #     print(
-        #         f"  - Coluna: {row['column']}, "
-        #         f"Valor inválido: {row['failure_case']}, "
-        #         f"Check: {row['check']}, "
-        #         f"Linha: {row['index']}"
-        #     )
 
-        # Mostrar checks que passaram
         passed_checks = df.drop(failure_df["index"])
         print(f"\n✅ Checks que passaram para {table}: {len(passed_checks)} linhas")
         print(passed_checks.head(10))  # mostra exemplo das linhas válidas
@@ -52,11 +44,11 @@ def validate_bronze_companies(db_config, table):
     return True
 
 
-def validate_bronze_partners(db_config, table):
+def validate_bronze_partners(table):
 
     """Valida dados bronze de sócios"""
 
-    df = read_table(db_config, table)
+    df = read_table(table)
 
     schema = DataFrameSchema({
         "cnpj": Column(str, nullable=False, checks=Check.str_matches(r'^\d+$')),
@@ -67,25 +59,17 @@ def validate_bronze_partners(db_config, table):
     })
 
     try:
-        # Validar e acumular erros
+
         schema.validate(df, lazy=True)
         print(f"✅ Todos os checks passaram para {table}!")
 
     except pa.errors.SchemaErrors as err:
         failure_df = err.failure_cases
         print(f"❌ Data Quality falhou para {table}: {len(failure_df)} erros encontrados")
-        # for _, row in failure_df.iterrows():
-        #     print(
-        #         f"  - Coluna: {row['column']}, "
-        #         f"Valor inválido: {row['failure_case']}, "
-        #         f"Check: {row['check']}, "
-        #         f"Linha: {row['index']}"
-        #     )
 
-        # Mostrar checks que passaram
         passed_checks = df.drop(failure_df["index"])
         print(f"\n✅ Checks que passaram para {table}: {len(passed_checks)} linhas")
-        print(passed_checks.head(10))  # mostra exemplo das linhas válidas
+        print(passed_checks.head(10))
 
         raise Exception(f"❌ Data Quality falhou para {table}, {len(failure_df)} erros encontrados.")
 
@@ -94,16 +78,9 @@ def validate_bronze_partners(db_config, table):
 
 def main():
     try:
-        db_config = {
-            "host": os.environ["POSTGRES_HOST"],
-            "dbname": os.environ["POSTGRES_DB"],
-            "user": os.environ["POSTGRES_USER"],
-            "password": os.environ["POSTGRES_PASSWORD"],
-            "port": int(os.environ["POSTGRES_PORT"]),
-        }
 
-        validate_bronze_companies(db_config, "bronze_companies")
-        validate_bronze_partners(db_config, "bronze_partners")
+        validate_bronze_companies("bronze_companies")
+        validate_bronze_partners("bronze_partners")
 
         print("✅ Todas as validações passaram!")
 

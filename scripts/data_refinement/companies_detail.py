@@ -5,14 +5,14 @@ sys.path.insert(0, '/opt/airflow/scripts')
 
 from utils import read_table, check_for_duplicates, save_to_postgres
 
-def get_processed_companies_detail(db_config):
+def get_processed_companies_detail():
 
-    df_companies = read_table(db_config, "silver_companies")
+    df_companies = read_table("silver_companies")
 
-    df_partners = read_table(db_config, "silver_partners")
+    df_partners = read_table("silver_partners")
     df_partners_processed = df_partners.groupby("cnpj", dropna=False).agg(
-        qtd_socios=("documento_socio", "count"),           # total de sócios
-        qtd_estrangeiros=("flag_socio_estrangeiro", "sum") # total de estrangeiros
+        qtd_socios=("documento_socio", "count"),
+        qtd_estrangeiros=("flag_socio_estrangeiro", "sum")
     ).reset_index()
 
     df_result = (
@@ -38,16 +38,8 @@ def get_processed_companies_detail(db_config):
 def main():
     """Função principal para execução direta do script"""
     try:
-        db_config = {
-            "host": os.environ["POSTGRES_HOST"],
-            "dbname": os.environ["POSTGRES_DB"],
-            "user": os.environ["POSTGRES_USER"],
-            "password": os.environ["POSTGRES_PASSWORD"],
-            "port": int(os.environ["POSTGRES_PORT"]),
-            "table": "gold_companies_detail"
-        }
 
-        df_processed = get_processed_companies_detail(db_config)
+        df_processed = get_processed_companies_detail()
 
         duplicates = check_for_duplicates(df_processed)
 
@@ -60,7 +52,7 @@ def main():
                 "doc_alvo": "BOOLEAN"
             }
 
-            save_to_postgres(df_processed, columns_table, db_config, ["cnpj"])
+            save_to_postgres(df_processed, columns_table, ["cnpj"])
 
     except Exception as e:
         print(f"❌ Erro no script: {e}")
