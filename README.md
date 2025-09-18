@@ -4,7 +4,7 @@ Pipeline de dados para processamento de informações cadastrais de empresas bra
 
 ## 🏗️ Arquitetura
 
-![alt text](https://file%2B.vscode-resource.vscode-cdn.net/Users/patriciatozi/Documents/Projetos/GitHub/receita-federal-empresas/documentation/src/Arquitetura%20-%20Receita%20Federal.png?version%3D1758221667306)
+![alt text](https://github.com/patriciatozi/receita-federal-empresas/blob/main/documentation/src/Arquitetura%20-%20Receita%20Federal.png)
 
 ## 📋 Funcionalidades
 
