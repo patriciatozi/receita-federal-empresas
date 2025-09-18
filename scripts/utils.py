@@ -1,6 +1,7 @@
 from psycopg2.extras import execute_values
 from dotenv import load_dotenv
 from bs4 import BeautifulSoup
+import pandera as pa
 import pandas as pd
 import psycopg2
 import requests
@@ -13,6 +14,19 @@ load_dotenv()
 
 def get_response(url):
 
+    """
+    Faz uma requisição HTTP GET para uma URL e retorna a resposta.
+    
+    Args:
+        url (str): URL para fazer a requisição
+        
+    Returns:
+        requests.Response: Objeto de resposta da requisição
+        
+    Raises:
+        requests.HTTPError: Se a requisição retornar status code de erro
+    """
+
     response = requests.get(url)
     response.raise_for_status()
 
@@ -20,11 +34,32 @@ def get_response(url):
 
 def get_compiled_pattern(response, pattern):
 
+    """
+    Parseia o HTML da resposta e compila um padrão regex.
+    
+    Args:
+        response (requests.Response): Resposta HTTP com conteúdo HTML
+        pattern (str): Padrão regex para compilar
+        
+    Returns:
+        tuple: (regex_pattern, BeautifulSoup) - padrão compilado e objeto BeautifulSoup
+    """
+
     soup = BeautifulSoup(response.text, "html.parser")
 
     return re.compile(pattern), soup
 
 def get_last_folder(url):
+
+    """
+    Encontra a pasta mais recente no diretório FTP da Receita Federal.
+    
+    Args:
+        url (str): URL do diretório principal
+        
+    Returns:
+        str: Nome da pasta mais recente (formato YYYY-MM)
+    """
 
     response = get_response(url)
 
@@ -39,16 +74,44 @@ def get_last_folder(url):
 
 def get_last_update():
 
+    """
+    Retorna a data atual para uso em metadados.
+    
+    Returns:
+        datetime.date: Data atual
+    """
+
     last_update = datetime.date.today()
 
     return last_update
 
 def get_source_data(
-    endpoint,
     key,
     file_columns,
     file_dtypes
 ):
+    
+    """
+    Obtém dados da fonte da Receita Federal baseado no tipo de arquivo.
+    
+    Args:
+        key (str): Tipo de arquivo ('Empresas', 'Socios', 'Estabelecimentos')
+        file_columns (list): Lista de nomes de colunas para o DataFrame
+        file_dtypes (dict): Dicionário com tipos de dados das colunas
+        
+    Returns:
+        pd.DataFrame: DataFrame com os dados processados
+        
+    Raises:
+        Exception: Se houver erro no download ou processamento do arquivo
+        
+    Example:
+        >>> colunas = ['cnpj', 'razao_social', 'natureza_juridica']
+        >>> tipos = {'cnpj': str, 'razao_social': str}
+        >>> df = get_source_data('Empresas', colunas, tipos)
+    """
+    
+    endpoint = os.environ.get("MAIN_ENDPOINT", "https://arquivos.receitafederal.gov.br/dados/cnpj/dados_abertos_cnpj/")
 
     last_updated_folder = get_last_folder(endpoint)
 
@@ -85,15 +148,19 @@ def get_source_data(
     return df
 
 def save_to_postgres(df, table, columns_table, conflict_cols=None, mode="update"):
-    """
-    Salva DataFrame no Postgres de forma idempotente.
 
+    """
+    Salva DataFrame no PostgreSQL de forma idempotente com suporte a upsert.
+    
     Args:
-        df (pd.DataFrame): Dados a serem salvos.
-        columns_table (dict): Colunas e tipos para criação da tabela.
-        db_config (dict): Credenciais do banco + nome da tabela.
-        conflict_cols (list): Colunas que definem unicidade (chave natural).
-        mode (str): "update" para upsert, "ignore" para ignorar duplicados, None para sempre inserir.
+        df (pd.DataFrame): DataFrame com dados a serem salvos
+        table (str): Nome da tabela de destino
+        columns_table (dict): Dicionário com definição de colunas {nome: tipo}
+        conflict_cols (list, optional): Colunas para detecção de conflitos
+        mode (str, optional): Modo de operação - "update" (upsert), "ignore" (skip), None (insert)
+        
+    Raises:
+        Exception: Se houver erro na operação de banco de dados
     """
 
     df = df.astype(object).where(pd.notna(df), None)
@@ -171,10 +238,9 @@ def read_table(table, columns=None, filters=None):
     Faz a leitura de uma tabela do PostgreSQL e retorna um DataFrame.
 
     Args:
-        db_config (dict): Dicionário com chaves 'host', 'port', 'dbname', 'user', 'password'.
-        table (str): Nome da tabela a ser lida.
-        columns (list, opcional): Lista de colunas a selecionar. Se None, seleciona todas.
-        filters (str, opcional): Condições SQL adicionais (ex: "cnpj='12345678'").
+        table (str): Nome da tabela
+        columns (list, optional): Lista de colunas para selecionar
+        filters (str, optional): Condição WHERE para filtrar dados
     
     Returns:
         pd.DataFrame: DataFrame com os dados da tabela.
@@ -196,6 +262,16 @@ def read_table(table, columns=None, filters=None):
 
 def check_for_duplicates(df):
 
+    """
+    Verifica se existem registros duplicados no DataFrame.
+    
+    Args:
+        df (pd.DataFrame): DataFrame para verificar duplicatas
+        
+    Returns:
+        bool: True se não há duplicatas, False se há duplicatas
+    """
+
     duplicates = df.duplicated(keep=False).sum()
 
     if duplicates > 0:
@@ -207,7 +283,15 @@ def check_for_duplicates(df):
     
 def get_database_connection():
 
-    """Cria a conexão com o PostgreSQL usando variáveis de ambiente"""
+    """
+    Cria conexão com o PostgreSQL usando variáveis de ambiente.
+    
+    Returns:
+        psycopg2.connection: Conexão com o banco de dados
+        
+    Raises:
+        Exception: Se não conseguir conectar ao banco
+    """
 
     db_config = {
             "host": os.environ["POSTGRES_HOST"],
@@ -227,13 +311,19 @@ def get_database_connection():
     
     return conn
 
-def get_connection_string():
-
-    """Retorna a string de conexão formatada"""
-
-    return f"postgresql://{os.getenv('POSTGRES_USER')}:{os.getenv('POSTGRES_PASSWORD')}@{os.getenv('POSTGRES_HOST')}:{os.getenv('POSTGRES_PORT')}/{os.getenv('POSTGRES_DB')}"
-
 def save_df_to_parquet(path, df, partition_by):
+
+    """
+    Salva DataFrame em formato Parquet com particionamento.
+    
+    Args:
+        path (str): Caminho onde salvar o arquivo
+        df (pd.DataFrame): DataFrame a ser salvo
+        partition_by (list): Lista de colunas para particionamento
+        
+    Raises:
+        Exception: Se houver erro ao salvar o arquivo
+    """
 
     try:
 
@@ -248,7 +338,19 @@ def save_df_to_parquet(path, df, partition_by):
 
 def log_quality_metric(table_name, stage, metric_name, metric_value, status='ok'):
 
-    """Log simples de métrica de qualidade"""
+    """
+    Registra métrica de qualidade de dados no PostgreSQL.
+    
+    Args:
+        table_name (str): Nome da tabela avaliada
+        stage (str): Estágio do pipeline (bronze, silver, gold)
+        metric_name (str): Nome da métrica
+        metric_value (float): Valor da métrica
+        status (str): Status da métrica ('ok', 'warning', 'error')
+        
+    Raises:
+        Exception: Se houver erro ao persistir a métrica
+    """
 
     try:
         metric_data = {
@@ -281,7 +383,14 @@ def log_quality_metric(table_name, stage, metric_name, metric_value, status='ok'
 
 def calculate_basic_metrics(df, table_name, stage):
 
-    """Calcula métricas básicas de forma simples"""
+    """
+    Calcula métricas básicas de qualidade de dados.
+    
+    Args:
+        df (pd.DataFrame): DataFrame para análise
+        table_name (str): Nome da tabela
+        stage (str): Estágio do pipeline
+    """
 
     total_records = len(df)
     null_percentage = (df.isnull().sum().sum() / (total_records * len(df.columns))) * 100
@@ -300,3 +409,45 @@ def calculate_basic_metrics(df, table_name, stage):
             col_null_pct = (df[column].isnull().sum() / total_records) * 100
             col_status = 'error' if col_null_pct > 10 else 'warning' if col_null_pct > 2 else 'ok'
             log_quality_metric(table_name, stage, f'null_pct_{column}', col_null_pct, col_status)
+
+
+def validate_data_quality_table(df, table, stage, schema):
+
+    """
+    Executa validação completa de qualidade de dados usando Pandera.
+    
+    Args:
+        df (pd.DataFrame): DataFrame para validação
+        table (str): Nome da tabela
+        stage (str): Estágio do pipeline
+        schema (pandera.Schema): Schema de validação
+        
+    Raises:
+        Exception: Se a validação falhar com detalhes dos erros
+    """
+
+    calculate_basic_metrics(df, table, stage)
+
+    try:
+
+        schema.validate(df, lazy=True)
+        print(f"✅ Todos os checks passaram para {table}!")
+
+        log_quality_metric(table, stage, "validation_success", 100, "ok")
+
+    except pa.errors.SchemaErrors as err:
+        failure_df = err.failure_cases
+        print(f"❌ Data Quality falhou para {table}: {len(failure_df)} erros encontrados")
+
+        error_count = len(err.failure_cases)
+        error_pct = (error_count / len(df)) * 100 if len(df) > 0 else 0
+        
+        status = 'error' if error_pct > 10 else 'warning'
+        log_quality_metric(table, stage, 'validation_errors', error_count, status)
+        log_quality_metric(table, stage, 'error_percentage', error_pct, status)
+
+        passed_checks = df.drop(failure_df["index"])
+        print(f"\n✅ Checks que passaram para {table}: {len(passed_checks)} linhas")
+        print(passed_checks.head(10))
+
+        raise Exception(f"❌ Data Quality falhou para {table}, {len(failure_df)} erros encontrados.")

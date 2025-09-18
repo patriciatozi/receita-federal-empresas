@@ -6,7 +6,6 @@ sys.path.insert(0, '/opt/airflow/scripts')
 from utils import get_source_data, save_to_postgres, save_df_to_parquet
 
 def get_companies():
-    endpoint = "https://arquivos.receitafederal.gov.br/dados/cnpj/dados_abertos_cnpj/"
 
     company_columns = [
         "cnpj",
@@ -27,7 +26,6 @@ def get_companies():
     }
 
     df_empresas = get_source_data(
-        endpoint,
         "Empresas",
         company_columns,
         company_dtypes

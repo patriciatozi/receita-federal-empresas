@@ -11,7 +11,7 @@ def get_processed_companies_detail():
 
     df_partners = read_table("silver_partners")
     df_partners_processed = df_partners.groupby("cnpj", dropna=False).agg(
-        qtd_socios=("documento_socio", "count"),
+        qtde_socios=("documento_socio", "count"),
         qtd_estrangeiros=("flag_socio_estrangeiro", "sum")
     ).reset_index()
 
@@ -27,13 +27,13 @@ def get_processed_companies_detail():
     df_result["cnpj"] = df_result["cnpj"].str.zfill(14)
 
     df_result["doc_alvo"] = df_result.apply(
-        lambda row: True if row["cod_porte"] == "03" and row["qtd_socios"] > 1 else False,
+        lambda row: True if row["cod_porte"] == "03" and row["qtde_socios"] > 1 else False,
         axis=1
     )
 
     df_result["flag_socio_estrangeiro"] = df_result["qtd_estrangeiros"] > 0
 
-    df_result = df_result[["cnpj", "qtd_socios", "flag_socio_estrangeiro", "doc_alvo"]].drop_duplicates()
+    df_result = df_result[["cnpj", "qtde_socios", "flag_socio_estrangeiro", "doc_alvo"]].drop_duplicates()
 
     df_result["last_update"] = get_last_update()
 
@@ -51,7 +51,7 @@ def main():
 
             columns_table = {
                 "cnpj": "TEXT",
-                "qtd_socios": "BIGINT",
+                "qtde_socios": "BIGINT",
                 "flag_socio_estrangeiro": "BOOLEAN",
                 "doc_alvo": "BOOLEAN",
                 "last_update": "DATE"
