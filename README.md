@@ -231,10 +231,10 @@ docker-compose down -v
 docker-compose exec airflow-scheduler airflow dags list
 
 # Trigger manual da DAG
-docker-compose exec airflow-scheduler airflow dags trigger main_pipeline
+docker-compose exec airflow-scheduler airflow dags trigger receita_federal_job
 
 # Ver logs de uma task
-docker-compose exec airflow-webserver airflow tasks logs main_pipeline bronze_companies
+docker-compose exec airflow-webserver airflow tasks logs receita_federal_job bronze_companies
 ```
 ### Desenvolvimento
 ``` sh
@@ -257,13 +257,6 @@ python scripts/data_quality/silver_validation.py
 ### Customização
 - Editar scripts/data_processing/ para novas transformações
 - Modificar scripts/data_quality/ para novas validações
-
-## 🤝 Contribuição
-1. Fork o projeto
-2. Crie uma branch para sua feature (git checkout -b feature/AmazingFeature)
-3. Commit suas mudanças (git commit -m 'Add some AmazingFeature')
-4. Push para a branch (git push origin feature/AmazingFeature)
-5. Abra um Pull Request
 
 ## 📄 Licença
 Este projeto está sob a licença MIT. Veja o arquivo LICENSE para detalhes.
