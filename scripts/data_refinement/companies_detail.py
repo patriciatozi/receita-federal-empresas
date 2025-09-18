@@ -3,7 +3,7 @@ import os
 
 sys.path.insert(0, '/opt/airflow/scripts')
 
-from utils import read_table, check_for_duplicates, save_to_postgres
+from utils import read_table, check_for_duplicates, save_to_postgres, get_last_update, save_df_to_parquet
 
 def get_processed_companies_detail():
 
@@ -33,6 +33,8 @@ def get_processed_companies_detail():
 
     df_result = df_result[["cnpj", "qtd_socios", "flag_socio_estrangeiro", "doc_alvo"]].drop_duplicates()
 
+    df_result["last_update"] = get_last_update()
+
     return df_result
 
 def main():
@@ -49,8 +51,11 @@ def main():
                 "cnpj": "TEXT",
                 "qtd_socios": "BIGINT",
                 "flag_socio_estrangeiro": "BOOLEAN",
-                "doc_alvo": "BOOLEAN"
+                "doc_alvo": "BOOLEAN",
+                "last_update": "TIMESTAMP"
             }
+
+            save_df_to_parquet("./data/gold/empresas_detalhe", df_processed, ["last_update"])
 
             save_to_postgres(df_processed, "gold_companies_detail", columns_table, ["cnpj"])
 

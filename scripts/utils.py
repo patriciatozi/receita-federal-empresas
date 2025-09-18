@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup
 import pandas as pd
 import psycopg2
 import requests
+import datetime
 import zipfile
 import re
 import io
@@ -37,6 +38,12 @@ def get_last_folder(url):
     print("Última pasta encontrada:", last_folder)
 
     return last_folder
+
+def get_last_update():
+
+    last_update = datetime.date.today()
+
+    return last_update
 
 def get_source_data(
     endpoint,

@@ -1,9 +1,9 @@
+import datetime
 import sys
-import os
 
 sys.path.insert(0, '/opt/airflow/scripts')
 
-from utils import read_table, check_for_duplicates, save_to_postgres
+from utils import read_table, check_for_duplicates, save_to_postgres, get_last_update, save_df_to_parquet
 
 def get_processed_companies(df):
 
@@ -16,6 +16,8 @@ def get_processed_companies(df):
         .astype(float)
     )
 
+    df["last_update"] = get_last_update()
+
     return df
 
 
@@ -23,7 +25,7 @@ def main():
     """Função principal para execução direta do script"""
     try:
 
-        df = read_table("bronze_companies")
+        df = read_table("bronze_companies").drop("last_update", axis=1)
 
         df_processed = get_processed_companies(df)
 
@@ -37,8 +39,11 @@ def main():
                 "natureza_juridica": "BIGINT",
                 "qualificacao_responsavel": "BIGINT",
                 "capital_social": "FLOAT",
-                "cod_porte": "TEXT"
+                "cod_porte": "TEXT",
+                "last_update": "TIMESTAMP"
             }
+
+            save_df_to_parquet("./data/silver/empresas", df_processed, ["last_update"])
 
             save_to_postgres(df_processed, "silver_companies", columns_table, ["cnpj"])
 

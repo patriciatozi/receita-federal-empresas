@@ -3,7 +3,7 @@ import os
 
 sys.path.insert(0, '/opt/airflow/scripts')
 
-from utils import read_table, check_for_duplicates, save_to_postgres
+from utils import read_table, check_for_duplicates, save_to_postgres, get_last_update, save_df_to_parquet
 
 def get_processed_partners(df):
 
@@ -34,6 +34,8 @@ def get_processed_partners(df):
 
         df_processed["tipo_socio"] = df_processed["tipo_socio"].astype(int)
 
+        df_processed["last_update"] = get_last_update()
+
         return df_processed
 
 
@@ -41,7 +43,7 @@ def main():
     """Função principal para execução direta do script"""
     try:
 
-        df = read_table("bronze_partners")
+        df = read_table("bronze_partners").drop("last_update", axis=1)
 
         df_processed = get_processed_partners(df)
 
@@ -55,8 +57,11 @@ def main():
                 "nome_socio": "TEXT",
                 "documento_socio": "TEXT",
                 "codigo_qualificacao_socio": "TEXT",
-                "flag_socio_estrangeiro": "BIGINT"
+                "flag_socio_estrangeiro": "BIGINT",
+                "last_update": "TIMESTAMP"
             }
+
+            save_df_to_parquet("./data/silver/socios", df_processed, ["last_update"])
 
             save_to_postgres(df_processed, "silver_partners", columns_table, ["cnpj", "documento_socio"])
 
