@@ -58,7 +58,7 @@ def main():
                 "documento_socio": "TEXT",
                 "codigo_qualificacao_socio": "TEXT",
                 "flag_socio_estrangeiro": "BIGINT",
-                "last_update": "TIMESTAMP"
+                "last_update": "DATE"
             }
 
             save_df_to_parquet("./data/silver/socios", df_processed, ["last_update"])

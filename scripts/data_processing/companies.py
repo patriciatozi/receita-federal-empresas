@@ -40,7 +40,7 @@ def main():
                 "qualificacao_responsavel": "BIGINT",
                 "capital_social": "FLOAT",
                 "cod_porte": "TEXT",
-                "last_update": "TIMESTAMP"
+                "last_update": "DATE"
             }
 
             save_df_to_parquet("./data/silver/empresas", df_processed, ["last_update"])

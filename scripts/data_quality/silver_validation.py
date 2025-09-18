@@ -8,7 +8,7 @@ import os
 warnings.filterwarnings("ignore")
 sys.path.insert(0, '/opt/airflow/scripts')
 
-from utils import read_table
+from utils import read_table, log_quality_metric, calculate_basic_metrics
 
 
 def validate_silver_companies(table):
@@ -23,16 +23,27 @@ def validate_silver_companies(table):
         "natureza_juridica": Column(int, checks=Check.in_range(1011, 9999), nullable=False)
     })
 
+    stage = "silver"
+    calculate_basic_metrics(df, table, stage)
+
     try:
-        # Validar e acumular erros
+
         schema.validate(df, lazy=True)
         print(f"✅ Todos os checks passaram para {table}!")
+
+        log_quality_metric(table, stage, "validation_success", 100, "ok")
 
     except pa.errors.SchemaErrors as err:
         failure_df = err.failure_cases
         print(f"❌ Data Quality falhou para {table}: {len(failure_df)} erros encontrados")
 
-        # Mostrar checks que passaram
+        error_count = len(err.failure_cases)
+        error_pct = (error_count / len(df)) * 100 if len(df) > 0 else 0
+        
+        status = 'error' if error_pct > 10 else 'warning'
+        log_quality_metric(table, stage, 'validation_errors', error_count, status)
+        log_quality_metric(table, stage, 'error_percentage', error_pct, status)
+
         passed_checks = df.drop(failure_df["index"])
         print(f"\n✅ Checks que passaram para {table}: {len(passed_checks)} linhas")
         print(passed_checks.head(10))  # mostra exemplo das linhas válidas
@@ -48,7 +59,6 @@ def validate_silver_partners(table):
 
     df = read_table(table)
 
-    # Forçar conversão para Int64 nullable (suporta NaNs)
     df["codigo_qualificacao_socio"] = pd.to_numeric(
         df["codigo_qualificacao_socio"], errors="coerce"
     ).astype("Int64")
@@ -63,16 +73,27 @@ def validate_silver_partners(table):
         "codigo_qualificacao_socio": Column("Int64", nullable=True),
     })
 
+    stage = "silver"
+    calculate_basic_metrics(df, table, stage)
+
     try:
-        # Validar e acumular erros
+
         schema.validate(df, lazy=True)
         print(f"✅ Todos os checks passaram para {table}!")
+
+        log_quality_metric(table, stage, "validation_success", 100, "ok")
 
     except pa.errors.SchemaErrors as err:
         failure_df = err.failure_cases
         print(f"❌ Data Quality falhou para {table}: {len(failure_df)} erros encontrados")
 
-        # Mostrar checks que passaram
+        error_count = len(err.failure_cases)
+        error_pct = (error_count / len(df)) * 100 if len(df) > 0 else 0
+        
+        status = 'error' if error_pct > 10 else 'warning'
+        log_quality_metric(table, stage, 'validation_errors', error_count, status)
+        log_quality_metric(table, stage, 'error_percentage', error_pct, status)
+
         passed_checks = df.drop(failure_df["index"])
         print(f"\n✅ Checks que passaram para {table}: {len(passed_checks)} linhas")
         print(passed_checks.head(10))  # mostra exemplo das linhas válidas

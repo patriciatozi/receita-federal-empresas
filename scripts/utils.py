@@ -1,6 +1,4 @@
 from psycopg2.extras import execute_values
-from sqlalchemy import create_engine
-from sqlalchemy.engine.url import URL
 from dotenv import load_dotenv
 from bs4 import BeautifulSoup
 import pandas as pd
@@ -246,3 +244,59 @@ def save_df_to_parquet(path, df, partition_by):
     except Exception as e:
         print(f"❌ Erro ao gravar o arquivo no diretório {path}:", e)
         raise e
+    
+
+def log_quality_metric(table_name, stage, metric_name, metric_value, status='ok'):
+
+    """Log simples de métrica de qualidade"""
+
+    try:
+        metric_data = {
+            'table_name': table_name,
+            'stage': stage,
+            'metric_name': metric_name,
+            'metric_value': metric_value,
+            'status': status
+        }
+        
+        df = pd.DataFrame([metric_data])
+        df['last_update'] = get_last_update()
+        
+        print(f"✓ Métrica {metric_name} para {table_name} ({stage}): {metric_value} [{status}]")
+
+        metric_columns = {
+            'table_name': 'TEXT',
+            'stage': 'TEXT',
+            'metric_name': 'TEXT',
+            'metric_value': 'FLOAT',
+            'status': 'TEXT',
+            'last_update': 'DATE'
+        }
+
+        save_to_postgres(df, "data_quality_metrics", metric_columns, conflict_cols=['table_name', 'metric_name', 'last_update'])
+        
+    except Exception as e:
+        print(f"✗ Erro ao logar métrica: {e}")
+        raise
+
+def calculate_basic_metrics(df, table_name, stage):
+
+    """Calcula métricas básicas de forma simples"""
+
+    total_records = len(df)
+    null_percentage = (df.isnull().sum().sum() / (total_records * len(df.columns))) * 100
+
+    status = 'ok'
+    if null_percentage > 20:
+        status = 'error'
+    elif null_percentage > 5:
+        status = 'warning'
+    
+    log_quality_metric(table_name, stage, 'total_records', total_records)
+    log_quality_metric(table_name, stage, 'null_percentage', null_percentage, status)
+    
+    for column in ['cnpj', 'cod_porte', 'natureza_juridica']:
+        if column in df.columns:
+            col_null_pct = (df[column].isnull().sum() / total_records) * 100
+            col_status = 'error' if col_null_pct > 10 else 'warning' if col_null_pct > 2 else 'ok'
+            log_quality_metric(table_name, stage, f'null_pct_{column}', col_null_pct, col_status)

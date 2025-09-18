@@ -24,6 +24,8 @@ def get_processed_companies_detail():
         )
     )
 
+    df_result["cnpj"] = df_result["cnpj"].str.zfill(14)
+
     df_result["doc_alvo"] = df_result.apply(
         lambda row: True if row["cod_porte"] == "03" and row["qtd_socios"] > 1 else False,
         axis=1
@@ -52,7 +54,7 @@ def main():
                 "qtd_socios": "BIGINT",
                 "flag_socio_estrangeiro": "BOOLEAN",
                 "doc_alvo": "BOOLEAN",
-                "last_update": "TIMESTAMP"
+                "last_update": "DATE"
             }
 
             save_df_to_parquet("./data/gold/empresas_detalhe", df_processed, ["last_update"])
