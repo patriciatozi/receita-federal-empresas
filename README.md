@@ -4,29 +4,7 @@ Pipeline de dados para processamento de informações cadastrais de empresas bra
 
 ## 🏗️ Arquitetura
 
-``` sh
-graph TB
-    A[Receita Federal<br>Dados Abertos] --> B[Bronze Layer<br>Raw Data]
-    B --> C[Silver Layer<br>Cleaned Data]
-    C --> D[Gold Layer<br>Business Data]
-    D --> E[Superset<br>Dashboards]
-    
-    subgraph "Orquestração"
-        F[Airflow DAG]
-    end
-    
-    subgraph "Data Quality"
-        G[Pandera Validation]
-        H[Quality Metrics]
-    end
-    
-    F --> B
-    F --> C
-    F --> D
-    G --> C
-    G --> D
-    H --> E
-```
+![alt text](https://file%2B.vscode-resource.vscode-cdn.net/Users/patriciatozi/Documents/Projetos/GitHub/receita-federal-empresas/documentation/src/Arquitetura%20-%20Receita%20Federal.png?version%3D1758221667306)
 
 ## 📋 Funcionalidades
 
