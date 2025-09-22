@@ -53,11 +53,11 @@ def main():
 
             columns_table = {
                 "cnpj": "TEXT",
-                "tipo_socio": "BIGINT",
+                "tipo_socio": "INTEGER",
                 "nome_socio": "TEXT",
                 "documento_socio": "TEXT",
                 "codigo_qualificacao_socio": "TEXT",
-                "flag_socio_estrangeiro": "BIGINT",
+                "flag_socio_estrangeiro": "INTEGER",
                 "last_update": "DATE"
             }
 

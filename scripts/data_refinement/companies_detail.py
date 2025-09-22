@@ -51,7 +51,7 @@ def main():
 
             columns_table = {
                 "cnpj": "TEXT",
-                "qtde_socios": "BIGINT",
+                "qtde_socios": "INTEGER",
                 "flag_socio_estrangeiro": "BOOLEAN",
                 "doc_alvo": "BOOLEAN",
                 "last_update": "DATE"

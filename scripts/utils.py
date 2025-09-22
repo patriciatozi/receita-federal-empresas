@@ -408,6 +408,12 @@ def calculate_basic_metrics(df, table_name, stage):
     
     log_quality_metric(table_name, stage, 'total_records', total_records)
     log_quality_metric(table_name, stage, 'null_percentage', null_percentage, status)
+
+    duplicate_count = df.duplicated().sum()
+    dup_status = 'ok'
+    if duplicate_count > 0:
+        dup_status = 'warning' if duplicate_count <= 10 else 'error'
+    log_quality_metric(table_name, stage, 'duplicate_count', duplicate_count, dup_status)
     
     for column in ['cnpj', 'cod_porte', 'natureza_juridica']:
         if column in df.columns:

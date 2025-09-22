@@ -45,8 +45,8 @@ def main():
         columns_table = {
             "cnpj": "TEXT",
             "razao_social": "TEXT",
-            "natureza_juridica": "BIGINT",
-            "qualificacao_responsavel": "BIGINT",
+            "natureza_juridica": "INTEGER",
+            "qualificacao_responsavel": "INTEGER",
             "capital_social": "TEXT",
             "cod_porte": "TEXT",
             "last_update": "TEXT"

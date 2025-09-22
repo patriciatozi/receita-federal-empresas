@@ -25,46 +25,28 @@ Fonte Oficial:
 ## 📁 Tipos de Dados Disponíveis
 ### 1. Dados de Empresas
 ``` sh
-# Estrutura principal
 {
-    "cnpj": "00000000000191",           # CNPJ raiz (8 dígitos)
+    "cnpj": "00000000000191",               # CNPJ
     "razao_social": "EMPRESA BRASILEIRA",
-    "natureza_juridica": 2051,          # Código da natureza jurídica
-    "qualificacao_responsavel": 10,     # Qualificação do responsável
-    "capital_social": 1000000.00,       # Capital social da empresa
-    "porte_empresa": "05",              # Porte da empresa (00, 01, 03, 05)
-    "ente_federativo": ""               # Ente federativo responsável
+    "natureza_juridica": 2051,              # Código da natureza jurídica
+    "qualificacao_responsavel": 10,         # Qualificação do responsável
+    "capital_social": 1000000.00,           # Capital social da empresa
+    "porte_empresa": "05",                  # Porte da empresa (00, 01, 03, 05)
+    "ente_federativo": ""                   # Ente federativo responsável
 }
 ```
 
 ### 2. Dados de Sócios
 ``` sh
 {
-    "cnpj": "00000000000191",           # CNPJ da empresa
-    "tipo_socio": 1,                    # 1=PJ, 2=PF, 3=Estrangeiro
+    "cnpj": "00000000000191",               # CNPJ da empresa
+    "tipo_socio": 1,                        # 1=PJ, 2=PF, 3=Estrangeiro
     "nome_socio": "JOÃO DA SILVA",
-    "documento_socio": "00000000000",   # CPF ou CNPJ do sócio
-    "codigo_qualificacao": 10,          # Código de qualificação
-    "data_entrada_sociedade": "20200101" # Data de entrada
+    "documento_socio": "00000000000",       # CPF ou CNPJ do sócio
+    "codigo_qualificacao": 10,              # Código de qualificação
+    "data_entrada_sociedade": "20200101"    # Data de entrada
 }
 ```
-
-### 🎯 Dados Relevantes para o Desafio
-#### Campos Utilizados no Projeto:
-Para empresas:
-- `cnpj`: Número do CNPJ (14 dígitos)
-- `razao_social`: Nome empresarial
-- `natureza_juridica`: Código da natureza jurídica
-- `qualificacao_responsavel`: Qualificação do responsável
-- `capital_social`: Valor do capital social
-- `porte_empresa`: Porte da empresa (00, 01, 03, 05)
-
-Para sócios:
-- `cnpj`: CNPJ da empresa
-- `tipo_socio`: Tipo de sócio (1, 2, 3)
-- `nome_socio`: Nome do sócio
-- `documento_socio`: CPF/CNPJ do sócio
-- `codigo_qualificacao`: Código de qualificação
 
 ### Classificação de Porte:
 ``` python
@@ -78,12 +60,12 @@ PORTE_EMPRESA = {
 
 ## 📋 Funcionalidades
 
-- ✅ Ingestão de dados dos arquivos ZIP da Receita Federal
-- ✅ Processamento em camadas (Bronze → Silver → Gold)
-- ✅ Validação de dados com Pandera
-- ✅ Monitoramento de qualidade com métricas em PostgreSQL
-- ✅ Dashboards no Apache Superset
-- ✅ Orquestração com Apache Airflow
+- Ingestão de dados dos arquivos ZIP da Receita Federal
+- Processamento em camadas (Bronze → Silver → Gold)
+- Validação de dados com Pandera
+- Monitoramento de qualidade com métricas em PostgreSQL
+- Dashboards no Apache Superset
+- Orquestração com Apache Airflow
 
 
 ## 🛠️ Tecnologias
@@ -131,19 +113,86 @@ receita-federal-empresas/
 ## 📊 Camadas de Dados
 
 ### 🥉 Bronze Layer (Raw)
-- Dados brutos ingeridos da Receita Federal
-- Formato original preservado
-- Validações básicas de formato
+- Função:
+    - Dados brutos ingeridos da Receita Federal
+    - Formato original preservado
+    - Validações básicas de formato
+- Destinos:
+    - PostgreSQL: `bronze_companies`, `bronze_partners`
+    - Parquet: `/data/bronze/` (backup)
+
+#### Tabelas PostgreSQL
+##### 1) `bronze_companies`
+Coluna | Tipo | Descrição 
+--- | --- | --- 
+cnpj | TEXT | Cadastro Nacional da Pessoa Jurídica 
+razao_social | TEXT | Nome empresarial
+natureza_juridica | INTEGER | Código de natureza jurídica 
+qualificacao_responsavel | INTEGER | Qualificação da pessoa responsável pela empresa
+capital_social | TEXT | Capital social da empresa
+cod_porte | TEXT | Código do porte da empresa
+last_update | TEXT | Última atualização mensal dos dados origem
+
+##### 2) `bronze_partners`
+Coluna | Tipo | Descrição 
+--- | --- | --- 
+cnpj | TEXT | Cadastro Nacional da Pessoa Jurídica 
+tipo_socio | TEXT | Tipo do sócio da empresa
+nome_socio | TEXT | Corresponde ao nome do sócio pessoa física, razão social e/ou nome da empresa 
+documento_socio | TEXT | CPF ou CNPJ do sócio, sócios estrangeiros são representados por `***999999**`
+codigo_qualificacao_socio | TEXT | Capital social da empresa
+last_update | TEXT | Última atualização mensal dos dados origem
 
 ### 🥈 Silver Layer (Cleaned)
-- Dados limpos e tratados
-- Schema validation com Pandera
-- Padronização de formatos
+- Função:
+    - Dados limpos e tratados
+    - Schema validation com Pandera
+    - Padronização de formatos
+- Destinos:
+    - PostgreSQL: `silver_companies`, `silver_partners`
+    - Parquet: `/data/silver/` (backup)
+
+#### Tabelas PostgreSQL
+##### 1) `silver_companies`
+Coluna | Tipo | Descrição 
+--- | --- | --- 
+cnpj | TEXT | Cadastro Nacional da Pessoa Jurídica 
+razao_social | TEXT | Nome empresarial
+natureza_juridica | INTEGER | Código de natureza jurídica 
+qualificacao_responsavel | INTEGER | Qualificação da pessoa responsável pela empresa
+capital_social | FLOAT | Capital social da empresa
+cod_porte | TEXT | Código do porte da empresa
+last_update | DATE | Última atualização de processamento dos dados
+
+##### 2) `silver_partners`
+Coluna | Tipo | Descrição 
+--- | --- | --- 
+cnpj | TEXT | Cadastro Nacional da Pessoa Jurídica 
+tipo_socio | TEXT | Tipo do sócio da empresa
+nome_socio | TEXT | Corresponde ao nome do sócio pessoa física, razão social e/ou nome da empresa 
+documento_socio | TEXT | CPF ou CNPJ do sócio, sócios estrangeiros são representados por `***999999**`
+codigo_qualificacao_socio | TEXT | Capital social da empresa
+flag_socio_estrangeiro | INTEGER | Indicação de que se trata de um sócio estrangeiro (`1`) ou não (`0`)
+last_update | DATE | Última atualização de processamento dos dados
 
 ### 🥇 Gold Layer (Business)
-- Dados enriquecidos para análise
-- Métricas de negócio
-- Agregações e transformações
+- Função:
+    - Dados enriquecidos para análise
+    - Métricas de negócio
+    - Agregações e transformações
+- Destinos:
+    - PostgreSQL: `gold_companies_detail`
+    - Parquet: `/data/gold/` (backup)
+
+#### Tabela PostgreSQL
+##### `gold_companies_detail`
+Coluna | Tipo | Descrição 
+--- | --- | --- 
+cnpj | TEXT | Cadastro Nacional da Pessoa Jurídica 
+qtde_socios | INTEGER | Número de sócios participantes do CNPJ
+flag_socio_estrangeiro | BOOLEAN | Indicação de sócio estrangeiro (`True`) ou não estrangeiro (`False`)
+doc_alvo | BOOLEAN | `True` quando porte da empresa = 03 & qtde_socios > 1, `False` para os demais casos
+last_update | DATE | Última atualização de processamento dos dados
 
 ## ✅ Data Quality Checks
 
@@ -171,7 +220,20 @@ LIMITE 10;
 
 ## 📈 Dashboards no Superset
 
-TBD
+### Métricas de Qualidade de Dados
+#### 1) Quantidade de registros (`total_records`)
+- Contabiliza o número total de linhas em cada tabela
+- Ajuda a identificar problemas de ingestão ou cargas incompletas
+#### 2) Integridade (`null_percentage`)
+- Percentual de valores nulos nas tabelas
+- Permite monitorar a completude dos dados e identificar colunas críticas com alta ausência de informação
+- No dashboard, os dados são divididos em categorias: `Valid` (dados preenchidos) e `Mostly Nulls` (dados ausentes)
+#### 3) Unicidade (`dq_duplicate_count`)
+- Número de registros duplicados em cada tabela
+- Avalia a consistência dos dados, garantindo que chaves ou registros únicos não se repitam
+
+### Visualização na Ferramenta
+![alt text](https://github.com/patriciatozi/receita-federal-empresas/blob/main/documentation/src/superset_dq_dashboard.png)
 
 ## 🚀 Setup do Ambiente
 ### Pré-requisitos
@@ -251,12 +313,11 @@ python scripts/data_quality/silver_validation.py
 ## 📝 Próximos Passos
 ### Melhorias Futuras
 - Implementar alertas de qualidade
-- Adicionar mais fontes de dados
-- Otimizar performance de queries
-- Implementar particionamento de dados
-### Customização
-- Editar scripts/data_processing/ para novas transformações
-- Modificar scripts/data_quality/ para novas validações
+- Tornar dinâmica a leitura de dados da origem, não se restringindo a apenas um arquivo de cada natureza (empresas ou sócios) a partir do último diretório atualizado
+- Refatoração para o PySpark e implementação em nuvem:
+    - Processamento distribuído mais eficaz
+    - Prevenção a Assimetria de Dados (data skew)
+    - Implementar particionamento de dados
 
 ## 📄 Licença
 Este projeto está sob a licença MIT. Veja o arquivo LICENSE para detalhes.
