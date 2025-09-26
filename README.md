@@ -13,7 +13,6 @@ Fonte Oficial:
 #### Atualização:
 
 - 🔄 Os dados são atualizados mensalmente
-- ⚠️ Podem sofrer desatualização de até 3 meses em relação à data atual
 
 #### Estrutura dos Arquivos:
 
@@ -26,11 +25,11 @@ Fonte Oficial:
 ### 1. Dados de Empresas
 ``` sh
 {
-    "cnpj": "00000000000191",               # CNPJ
+    "cnpj": "00000191",                     # CNPJ
     "razao_social": "EMPRESA BRASILEIRA",
     "natureza_juridica": 2051,              # Código da natureza jurídica
     "qualificacao_responsavel": 10,         # Qualificação do responsável
-    "capital_social": 1000000.00,           # Capital social da empresa
+    "capital_social": "1000000,00",         # Capital social da empresa
     "porte_empresa": "05",                  # Porte da empresa (00, 01, 03, 05)
     "ente_federativo": ""                   # Ente federativo responsável
 }
@@ -39,10 +38,10 @@ Fonte Oficial:
 ### 2. Dados de Sócios
 ``` sh
 {
-    "cnpj": "00000000000191",               # CNPJ da empresa
+    "cnpj": "00000191",                     # CNPJ da empresa
     "tipo_socio": 1,                        # 1=PJ, 2=PF, 3=Estrangeiro
     "nome_socio": "JOÃO DA SILVA",
-    "documento_socio": "00000000000",       # CPF ou CNPJ do sócio
+    "documento_socio": "***999999**",       # CPF ou CNPJ do sócio
     "codigo_qualificacao": 10,              # Código de qualificação
     "data_entrada_sociedade": "20200101"    # Data de entrada
 }
@@ -100,7 +99,7 @@ receita-federal-empresas/
 │   ├── data_quality/             # Validações com Pandera  
 │   │   ├── bronze_validation.py
 │   │   ├── silver_validation.py
-│   │   ├──gold_validation.py
+│   │   ├── gold_validation.py
 │   └──tests                      # Testes Unitários
 │       ├── conftest.py
 │       ├── test_data_quality.py
@@ -205,7 +204,6 @@ last_update | DATE | Última atualização de processamento dos dados
 
 #### Camada Gold:
 - ✅ CNPJ deduplicado com 14 dígitos
-- ✅ Quantidade de sócios > 0
 - ✅ Flags booleanas consistentes
 - ✅ Regras de negócio aplicadas
 
