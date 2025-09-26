@@ -79,7 +79,7 @@ PORTE_EMPRESA = {
 
 ## 🏗️ Arquitetura
 
-![alt text](https://github.com/patriciatozi/receita-federal-empresas/blob/main/documentation/src/Arquitetura%20-%20Receita%20Federal.png)
+![alt text](https://github.com/patriciatozi/receita-federal-empresas/blob/main/documentation/src/Arquitetura_Receita_Federal.png)
 
 
 ## 📁 Estrutura do Projeto
