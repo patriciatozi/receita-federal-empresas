@@ -30,7 +30,7 @@ class TestDataQuality:
     @patch('scripts.utils.get_last_update')
     def test_log_quality_metric_failure(self, mock_last_update, mock_save):
         """Testa log de métrica de qualidade com erro"""
-        mock_last_update.return_value = '2024-09-18'
+        mock_last_update.return_value = '2025-09-18'
         mock_save.side_effect = Exception('DB Error')
         
         with pytest.raises(Exception, match='DB Error'):

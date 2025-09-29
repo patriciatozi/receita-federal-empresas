@@ -47,24 +47,24 @@ class TestUtils:
         mock_response = MagicMock()
         mock_response.text = '''
         <html>
-            <a href="2024-09/">2024-09</a>
-            <a href="2024-08/">2024-08</a>
+            <a href="2025-09/">2025-09</a>
+            <a href="2025-08/">2025-08</a>
         </html>
         '''
         mock_get_response.return_value = mock_response
         
         last_folder = get_last_folder('https://test.com')
         
-        assert last_folder == '2024-09'
+        assert last_folder == '2025-09'
         mock_get_response.assert_called_once_with('https://test.com')
     
     def test_get_last_update(self):
         """Testa obtenção da data atual"""
         import datetime
         with patch('datetime.date') as mock_date:
-            mock_date.today.return_value = datetime.date(2024, 9, 18)
+            mock_date.today.return_value = datetime.date(2025, 9, 18)
             result = get_last_update()
-            assert result == datetime.date(2024, 9, 18)
+            assert result == datetime.date(2025, 9, 18)
     
     @patch('scripts.utils.get_response')
     @patch('scripts.utils.get_last_folder')
@@ -73,7 +73,7 @@ class TestUtils:
     def test_get_source_data(self, mock_read_csv, mock_zipfile, mock_get_last_folder, mock_get_response):
         """Testa obtenção de dados da fonte"""
         # Setup dos mocks
-        mock_get_last_folder.return_value = '2024-09'
+        mock_get_last_folder.return_value = '2025-09'
         
         mock_zip = MagicMock()
         mock_zip.namelist.return_value = ['Empresas.csv']
@@ -102,7 +102,7 @@ class TestUtils:
         
         assert len(result) == 1
         assert 'last_update' in result.columns
-        assert result['last_update'].iloc[0] == '2024-09'
+        assert result['last_update'].iloc[0] == '2025-09'
     
     def test_save_to_postgres(self, sample_df):
         """Testa salvamento no PostgreSQL"""
